@@ -1,29 +1,27 @@
 {% extends 'control/base.html' %}
-{% block title %}Log de Auditoría{% endblock %}
+{% block title %}Auditoria{% endblock %}
 {% block content %}
 <div class="page-header">
-    <h1><i class="bi bi-journal-text me-2" style="color:#2c4a6e;"></i>Log de Auditoría</h1>
-    <p>Últimas 200 acciones registradas en el sistema</p>
+    <h1><i class="bi bi-journal-text me-2" style="color:#2c4a6e;"></i>Log de Auditoria</h1>
+    <p>Ultimas 200 acciones registradas por el sistema.</p>
 </div>
 <div class="tabla-asistencia">
     <table class="table table-hover">
         <thead>
-            <tr><th>Fecha/Hora</th><th>Acción</th><th>Empleado</th><th>Realizado por</th><th>IP</th><th>Detalles</th></tr>
+            <tr><th>Fecha/Hora</th><th>Accion</th><th>Empleado</th><th>Realizado por</th><th>IP</th><th>Detalles</th></tr>
         </thead>
         <tbody>
             {% for log in logs %}
             <tr>
-                <td style="font-size:.8rem;white-space:nowrap;color:#718096;">
-                    {{ log.timestamp|date:"d/m/Y H:i:s" }}
-                </td>
+                <td style="font-size:.8rem;white-space:nowrap;color:#718096;">{{ log.timestamp|date:"d/m/Y H:i:s" }}</td>
                 <td>
                     <span style="font-size:.78rem;font-weight:600;background:#e8f0fe;color:#1a2e4a;padding:.2em .6em;border-radius:6px;">
                         {{ log.accion }}
                     </span>
                 </td>
-                <td style="font-size:.85rem;">{{ log.empleado|default:"—" }}</td>
-                <td style="font-size:.85rem;">{{ log.realizado_por|default:"kiosco" }}</td>
-                <td style="font-size:.78rem;color:#718096;font-family:monospace;">{{ log.ip_address|default:"—" }}</td>
+                <td style="font-size:.85rem;">{{ log.empleado|default:"-" }}</td>
+                <td style="font-size:.85rem;">{{ log.realizado_por|default:"Control de Asistencia" }}</td>
+                <td style="font-size:.78rem;color:#718096;font-family:monospace;">{{ log.ip_address|default:"-" }}</td>
                 <td style="font-size:.78rem;color:#718096;">
                     {% if log.datos_despues %}
                         {% if log.datos_despues.hora_entrada %}E: {{ log.datos_despues.hora_entrada }}{% endif %}
@@ -35,7 +33,7 @@
                 </td>
             </tr>
             {% empty %}
-            <tr><td colspan="6" class="text-center text-muted py-4">Sin registros de auditoría.</td></tr>
+            <tr><td colspan="6" class="text-center text-muted py-4">Sin registros de auditoria.</td></tr>
             {% endfor %}
         </tbody>
     </table>

@@ -1,98 +1,215 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión — Colegio Villa Heroica</title>
+    <title>Acceso administrativo - Colegio Villa Heroica</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
         :root {
-            --azul-oscuro: #1a2e4a;
-            --azul-medio: #2c4a6e;
-            --acento: #e8a020;
+            --vh-navy: #10233f;
+            --vh-ink: #17345e;
+            --vh-gold: #cc9b2f;
+            --vh-paper: #fffdf8;
         }
 
         body {
+            margin: 0;
             min-height: 100vh;
-            background: linear-gradient(135deg, var(--azul-oscuro) 0%, var(--azul-medio) 100%);
-            display: flex;
+            font-family: 'Manrope', sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(204, 155, 47, 0.18), transparent 24%),
+                linear-gradient(180deg, #f7efdf 0%, #ece0cb 100%);
+            color: var(--vh-navy);
+        }
+
+        .login-shell {
+            max-width: 1100px;
+            margin: 0 auto;
+            min-height: 100vh;
+            padding: 1.2rem;
+            display: grid;
+            grid-template-columns: 1.05fr 0.95fr;
+            gap: 1.4rem;
             align-items: center;
-            justify-content: center;
-            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        .brand-panel,
+        .login-card {
+            background: rgba(255, 253, 248, 0.92);
+            border-radius: 32px;
+            border: 1px solid rgba(16, 35, 63, 0.08);
+            box-shadow: 0 24px 60px rgba(16, 35, 63, 0.12);
+        }
+
+        .brand-panel {
+            padding: 2rem;
+        }
+
+        .system-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.7rem;
+            padding: 0.7rem 1rem;
+            border-radius: 999px;
+            background: rgba(204, 155, 47, 0.14);
+            font-size: 0.78rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-bottom: 1.25rem;
+        }
+
+        .brand-logo {
+            width: 120px;
+            height: 120px;
+            object-fit: contain;
+            border-radius: 50%;
+            background: #fff;
+            padding: 0.4rem;
+            box-shadow: 0 14px 36px rgba(16, 35, 63, 0.12);
+            margin-bottom: 1rem;
+        }
+
+        .brand-title {
+            font-family: 'Archivo', sans-serif;
+            font-size: clamp(2.1rem, 4vw, 4.2rem);
+            line-height: 0.96;
+            margin: 0;
+        }
+
+        .brand-copy {
+            margin-top: 1rem;
+            color: #49586f;
+            line-height: 1.7;
+            max-width: 530px;
         }
 
         .login-card {
-            background: #fff;
-            border-radius: 16px;
-            padding: 2.5rem 2rem;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 2rem;
         }
 
-        .login-logo {
-            width: 64px; height: 64px;
-            background: var(--acento);
-            border-radius: 14px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.8rem;
-            margin: 0 auto 1rem;
+        .login-header {
+            text-align: center;
+            margin-bottom: 1.4rem;
         }
 
         .login-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--azul-oscuro);
-            text-align: center;
+            font-family: 'Archivo', sans-serif;
+            font-size: 1.6rem;
+            margin-bottom: 0.4rem;
         }
 
         .login-sub {
-            font-size: 0.82rem;
-            color: #718096;
-            text-align: center;
-            margin-bottom: 1.8rem;
+            color: #5f6d82;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            font-weight: 600;
+        }
+
+        .input-group-text,
+        .form-control {
+            min-height: 58px;
+            border-radius: 16px;
+            border-color: rgba(16, 35, 63, 0.12);
+        }
+
+        .input-group .input-group-text {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+            background: rgba(16, 35, 63, 0.06);
+        }
+
+        .input-group .form-control {
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
         }
 
         .form-control:focus {
-            border-color: var(--azul-medio);
-            box-shadow: 0 0 0 0.2rem rgba(44,74,110,0.2);
+            border-color: var(--vh-gold);
+            box-shadow: 0 0 0 0.25rem rgba(204, 155, 47, 0.14);
         }
 
         .btn-login {
-            background: var(--azul-oscuro);
+            min-height: 64px;
+            border-radius: 18px;
+            background: var(--vh-navy);
             border: none;
             color: #fff;
+            font-family: 'Archivo', sans-serif;
+            letter-spacing: 0.04em;
             width: 100%;
-            padding: 0.7rem;
-            font-weight: 600;
-            border-radius: 8px;
-            transition: background 0.2s;
         }
 
         .btn-login:hover {
-            background: var(--azul-medio);
+            background: #0b1a30;
             color: #fff;
         }
 
-        .footer-login {
-            text-align: center;
-            font-size: 0.75rem;
-            color: rgba(255,255,255,0.5);
-            margin-top: 1.5rem;
+        .login-links {
+            display: grid;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .link-secondary {
+            min-height: 56px;
+            border-radius: 16px;
+            border: 1px solid rgba(16, 35, 63, 0.12);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.55rem;
+            text-decoration: none;
+            color: var(--vh-navy);
+            font-weight: 700;
+            background: #fff;
+        }
+
+        .link-secondary:hover {
+            color: var(--vh-navy);
+            background: rgba(16, 35, 63, 0.04);
+        }
+
+        @media (max-width: 900px) {
+            .login-shell {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <div>
-        <div class="login-card">
-            <div class="login-logo">🏫</div>
-            <div class="login-title">Colegio Villa Heroica</div>
-            <div class="login-sub">Sistema de Control de Asistencia<br>Guatire, Venezuela</div>
+    <div class="login-shell">
+        <section class="brand-panel">
+            <div class="system-chip">
+                <i class="bi bi-shield-check"></i>
+                Sistema de Asistencia v1.0 | Diseñado para Colegio Villa Heroica
+            </div>
+            <img src="{% static 'control/img/logo-villa-heroica.png' %}" alt="Colegio Villa Heroica" class="brand-logo">
+            <h1 class="brand-title">Acceso<br>administrativo</h1>
+            <p class="brand-copy">
+                Ingrese al panel para gestionar personal, revisar historial de asistencia y abrir
+                Control de Asistencia sin interrumpir el trabajo del equipo.
+            </p>
+        </section>
+
+        <section class="login-card">
+            <div class="login-header">
+                <div class="login-title">Iniciar sesion</div>
+                <div class="login-sub">
+                    Sistema de Asistencia v1.0<br>
+                    Diseñado para Colegio Villa Heroica
+                </div>
+            </div>
 
             {% if form.errors %}
-            <div class="alert alert-danger py-2 mb-3" style="font-size:0.85rem;">
-                <i class="bi bi-exclamation-triangle me-1"></i>
+            <div class="alert alert-danger py-3 mb-3">
+                <i class="bi bi-exclamation-triangle me-2"></i>
                 Usuario o contraseña incorrectos. Intente nuevamente.
             </div>
             {% endif %}
@@ -100,26 +217,33 @@
             <form method="post">
                 {% csrf_token %}
                 <div class="mb-3">
-                    <label class="form-label fw-semibold" style="font-size:0.85rem;">Usuario</label>
+                    <label class="form-label fw-bold">Usuario</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-person"></i></span>
                         <input type="text" name="username" class="form-control" placeholder="Ingrese su usuario" autofocus required>
                     </div>
                 </div>
                 <div class="mb-4">
-                    <label class="form-label fw-semibold" style="font-size:0.85rem;">Contraseña</label>
+                    <label class="form-label fw-bold">Contraseña</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-lock"></i></span>
                         <input type="password" name="password" class="form-control" placeholder="Ingrese su contraseña" required>
                     </div>
                 </div>
                 <button type="submit" class="btn btn-login">
-                    <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión
+                    <i class="bi bi-box-arrow-in-right me-2"></i>Entrar al panel
                 </button>
             </form>
-        </div>
-        <div class="footer-login">Sistema de Asistencia v1.0 &bull; Pasantía 2024</div>
+
+            <div class="login-links">
+                <a href="{% url 'kiosco' %}" class="link-secondary">
+                    <i class="bi bi-display"></i>Ir a Control de Asistencia
+                </a>
+                <a href="{% url 'dashboard' %}" class="link-secondary">
+                    <i class="bi bi-house-door"></i>Volver al inicio
+                </a>
+            </div>
+        </section>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

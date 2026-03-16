@@ -4,103 +4,130 @@
 
 <div class="page-header">
     <h1>
-        <i class="bi bi-person-{% if accion == 'Crear' %}plus{% else %}pencil{% endif %} me-2"
-           style="color:#2c4a6e;"></i>{{ accion }} Empleado
+        <i class="bi bi-person-{% if accion == 'Crear' %}plus{% else %}pencil{% endif %} me-2" style="color:#17345e;"></i>
+        {{ accion }} Empleado
     </h1>
-    <p>{% if accion == 'Editar' %}Modifique los datos de {{ empleado }}
-       {% else %}Complete los datos del nuevo empleado{% endif %}</p>
+    <p>
+        {% if accion == 'Editar' %}
+            Ajuste la informacion operativa de {{ empleado }}.
+        {% else %}
+            Registre rapidamente un nuevo colaborador para el control de asistencia.
+        {% endif %}
+    </p>
 </div>
 
 <div class="row justify-content-center">
-    <div class="col-lg-7">
+    <div class="col-xl-8">
         <div class="card-form">
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
-                <div class="row g-3">
-                    <!-- Datos personales -->
+                <div class="row g-4">
                     <div class="col-12">
-                        <h6 class="fw-bold mb-0" style="color:#1a2e4a;font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;">
-                            Datos Personales
-                        </h6>
-                        <hr class="mt-2 mb-3">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                            <div>
+                                <div class="text-uppercase fw-bold" style="font-size:.74rem;letter-spacing:.14em;color:#7b6641;">Ficha operativa</div>
+                                <h5 class="mb-0 fw-bold" style="color:#10233f;">Datos del empleado</h5>
+                            </div>
+                            <div class="text-muted" style="font-size:.84rem;">Campos clave para marcaje y reportes diarios.</div>
+                        </div>
                     </div>
-                    <div class="col-sm-6">
-                        <label class="form-label fw-semibold" style="font-size:.85rem;">Nombre</label>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Nombre</label>
                         {{ form.nombre }}
-                        {% if form.nombre.errors %}<div class="text-danger" style="font-size:.8rem;">{{ form.nombre.errors }}</div>{% endif %}
+                        {% if form.nombre.errors %}<div class="text-danger small mt-1">{{ form.nombre.errors }}</div>{% endif %}
                     </div>
-                    <div class="col-sm-6">
-                        <label class="form-label fw-semibold" style="font-size:.85rem;">Apellido</label>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Apellido</label>
                         {{ form.apellido }}
+                        {% if form.apellido.errors %}<div class="text-danger small mt-1">{{ form.apellido.errors }}</div>{% endif %}
                     </div>
-                    <div class="col-sm-6">
-                        <label class="form-label fw-semibold" style="font-size:.85rem;">Cédula</label>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Cedula</label>
                         {{ form.cedula }}
-                        {% if form.cedula.errors %}<div class="text-danger" style="font-size:.8rem;">{{ form.cedula.errors }}</div>{% endif %}
-                        <div class="form-text">Formato: V-12345678 o E-12345678</div>
+                        {% if form.cedula.errors %}<div class="text-danger small mt-1">{{ form.cedula.errors }}</div>{% endif %}
+                        <div class="form-text">Use formato V-12345678 o E-12345678.</div>
                     </div>
-                    <div class="col-sm-6">
-                        <label class="form-label fw-semibold" style="font-size:.85rem;">Cargo</label>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Cargo</label>
                         {{ form.cargo }}
+                        {% if form.cargo.errors %}<div class="text-danger small mt-1">{{ form.cargo.errors }}</div>{% endif %}
                     </div>
-                    <div class="col-sm-6">
-                        <label class="form-label fw-semibold" style="font-size:.85rem;">Departamento</label>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Departamento</label>
                         {{ form.departamento }}
+                        {% if form.departamento.errors %}<div class="text-danger small mt-1">{{ form.departamento.errors }}</div>{% endif %}
                     </div>
-                    <div class="col-sm-6">
-                        <label class="form-label fw-semibold" style="font-size:.85rem;">Foto</label>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Foto</label>
                         {{ form.foto }}
                         {% if empleado and empleado.foto_url %}
-                        <div class="mt-2">
-                            <img src="{{ empleado.foto_url }}" alt="Foto actual"
-                                 style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid #e2e8f0;">
-                            <small class="text-muted ms-2">Foto actual</small>
+                        <div class="mt-3 d-flex align-items-center gap-3">
+                            <img src="{{ empleado.foto_url }}" alt="Foto actual" style="width:72px;height:72px;border-radius:20px;object-fit:cover;border:3px solid rgba(16,35,63,.08);">
+                            <div class="text-muted small">Foto actual del empleado.</div>
                         </div>
                         {% endif %}
                     </div>
 
-                    <!-- Horario -->
-                    <div class="col-12 mt-2">
-                        <h6 class="fw-bold mb-0" style="color:#1a2e4a;font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;">
-                            Horario Laboral
-                        </h6>
-                        <hr class="mt-2 mb-3">
-                    </div>
-                    <div class="col-sm-6">
-                        <label class="form-label fw-semibold" style="font-size:.85rem;">Hora de Entrada Esperada</label>
-                        {{ form.hora_entrada }}
-                        <div class="form-text">Usado para detectar tardanzas</div>
-                    </div>
-                    <div class="col-sm-6">
-                        <label class="form-label fw-semibold" style="font-size:.85rem;">Hora de Salida Esperada</label>
-                        {{ form.hora_salida }}
-                        <div class="form-text">Usado para detectar salidas anticipadas</div>
+                    <div class="col-12 pt-2">
+                        <div class="text-uppercase fw-bold" style="font-size:.74rem;letter-spacing:.14em;color:#7b6641;">Horario</div>
+                        <h5 class="mb-0 fw-bold" style="color:#10233f;">Selector AM / PM</h5>
                     </div>
 
-                    <!-- Estado -->
-                    <div class="col-12 mt-2">
-                        <div class="form-check">
-                            {{ form.activo }}
-                            <label class="form-check-label fw-semibold" style="font-size:.85rem;">
-                                Empleado activo
-                            </label>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Hora de Entrada Esperada</label>
+                        {{ form.hora_entrada }}
+                        {% if form.hora_entrada.errors %}<div class="text-danger small mt-1">{{ form.hora_entrada.errors }}</div>{% endif %}
+                        <div class="form-text">Selector tactil compatible con movil y formato de 12 horas.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Hora de Salida Esperada</label>
+                        {{ form.hora_salida }}
+                        {% if form.hora_salida.errors %}<div class="text-danger small mt-1">{{ form.hora_salida.errors }}</div>{% endif %}
+                        <div class="form-text">Ideal para definir cierre de jornada y detectar salidas anticipadas.</div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="p-3 rounded-4" style="background:rgba(16,35,63,.04);border:1px solid rgba(16,35,63,.08);">
+                            <div class="form-check m-0">
+                                {{ form.activo }}
+                                <label class="form-check-label fw-bold">Empleado activo</label>
+                            </div>
+                            <div class="text-muted small mt-1">Solo personal activo aparece en Control de Asistencia y reportes del dia.</div>
                         </div>
                     </div>
                 </div>
 
                 <hr class="my-4">
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn fw-semibold"
-                            style="background:#1a2e4a;color:#fff;border-radius:8px;padding:.6rem 1.5rem;">
-                        <i class="bi bi-check-lg me-1"></i>Guardar
+                <div class="d-flex gap-2 flex-wrap">
+                    <button type="submit" class="btn btn-primary-strong px-4 py-3">
+                        <i class="bi bi-check-lg me-2"></i>Guardar cambios
                     </button>
-                    <a href="{% url 'lista_empleados' %}" class="btn btn-outline-secondary"
-                       style="border-radius:8px;">
-                        <i class="bi bi-x me-1"></i>Cancelar
+                    <a href="{% url 'lista_empleados' %}" class="btn btn-outline-strong px-4 py-3">
+                        <i class="bi bi-arrow-left me-2"></i>Volver
                     </a>
                 </div>
             </form>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+    document.querySelectorAll('.js-timepicker').forEach((input) => {
+        flatpickr(input, {
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: 'h:i K',
+            time_24hr: false,
+            minuteIncrement: 5,
+            allowInput: true,
+        });
+    });
+</script>
 {% endblock %}

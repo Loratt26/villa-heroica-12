@@ -1,147 +1,161 @@
 {% extends 'control/base.html' %}
+{% load static %}
 {% block title %}Panel Principal{% endblock %}
 {% block content %}
 
 <div class="page-header">
-    <h1><i class="bi bi-speedometer2 me-2" style="color:#2c4a6e;"></i>Panel Principal</h1>
-    <p>Resumen de asistencia — {{ hoy|date:"l d \d\e F \d\e Y" }}</p>
+    <h1><i class="bi bi-speedometer2 me-2" style="color:#17345e;"></i>Panel Principal</h1>
+    <p>Resumen diario de asistencia - {{ hoy|date:"l d \d\e F \d\e Y" }}</p>
 </div>
 
-<!-- Estadísticas -->
 <div class="row g-3 mb-4">
     <div class="col-sm-6 col-xl-3">
-        <div class="stat-card">
+        <div class="stat-card h-100">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
-                    <div class="stat-label">Total Personal</div>
-                    <div class="stat-value mt-1">{{ total_empleados }}</div>
+                    <div class="stat-label">Total personal</div>
+                    <div class="stat-value mt-2">{{ total_empleados }}</div>
                 </div>
-                <div class="stat-icon" style="background:#e8f0fe; color:#1a2e4a;">
+                <div class="stat-icon" style="background:rgba(16,35,63,.08); color:#10233f;">
                     <i class="bi bi-people-fill"></i>
                 </div>
             </div>
         </div>
     </div>
     <div class="col-sm-6 col-xl-3">
-        <div class="stat-card">
+        <div class="stat-card h-100">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
-                    <div class="stat-label">Han Entrado</div>
-                    <div class="stat-value mt-1" style="color:#065f46;">{{ con_entrada }}</div>
+                    <div class="stat-label">Han entrado</div>
+                    <div class="stat-value mt-2" style="color:#1c7c4f;">{{ con_entrada }}</div>
                 </div>
-                <div class="stat-icon" style="background:#d1fae5; color:#065f46;">
+                <div class="stat-icon" style="background:rgba(28,124,79,.12); color:#1c7c4f;">
                     <i class="bi bi-box-arrow-in-right"></i>
                 </div>
             </div>
         </div>
     </div>
     <div class="col-sm-6 col-xl-3">
-        <div class="stat-card">
+        <div class="stat-card h-100">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
-                    <div class="stat-label">Presentes Ahora</div>
-                    <div class="stat-value mt-1" style="color:#1d4ed8;">{{ presentes }}</div>
+                    <div class="stat-label">Presentes ahora</div>
+                    <div class="stat-value mt-2" style="color:#17345e;">{{ presentes }}</div>
                 </div>
-                <div class="stat-icon" style="background:#dbeafe; color:#1d4ed8;">
+                <div class="stat-icon" style="background:rgba(23,52,94,.12); color:#17345e;">
                     <i class="bi bi-person-check-fill"></i>
                 </div>
             </div>
         </div>
     </div>
     <div class="col-sm-6 col-xl-3">
-        <div class="stat-card">
+        <div class="stat-card h-100">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
-                    <div class="stat-label">Sin Marcar</div>
-                    <div class="stat-value mt-1" style="color:#b91c1c;">{{ ausentes }}</div>
+                    <div class="stat-label">Sin marcar</div>
+                    <div class="stat-value mt-2" style="color:#9f2d2d;">{{ ausentes }}</div>
                 </div>
-                <div class="stat-icon" style="background:#fee2e2; color:#b91c1c;">
+                <div class="stat-icon" style="background:rgba(159,45,45,.12); color:#9f2d2d;">
                     <i class="bi bi-person-x-fill"></i>
                 </div>
             </div>
             {% if total_tardanzas > 0 %}
-            <div class="mt-2" style="font-size:.78rem;">
-                <span class="badge-tardanza"><i class="bi bi-clock me-1"></i>{{ total_tardanzas }} tardanza{{ total_tardanzas|pluralize }}</span>
+            <div class="mt-3">
+                <span class="badge-tardanza"><i class="bi bi-clock-history"></i>{{ total_tardanzas }} tardanza{{ total_tardanzas|pluralize }}</span>
             </div>
             {% endif %}
         </div>
     </div>
 </div>
 
-<!-- Acciones + tabla -->
 <div class="row g-3">
-    <div class="col-lg-4">
+    <div class="col-xl-4">
         <div class="card-form h-100">
-            <h6 class="fw-bold mb-3" style="color:#1a2e4a;"><i class="bi bi-lightning-charge me-2"></i>Acciones Rápidas</h6>
-            <div class="d-grid gap-2">
-                <a href="{% url 'kiosco' %}" class="btn btn-lg fw-bold"
-                   style="background:#16a34a;color:#fff;border-radius:8px;">
-                    <i class="bi bi-display me-2"></i>Abrir Kiosco
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <div>
+                    <h6 class="fw-bold mb-1" style="color:#10233f;">Centro de acciones</h6>
+                    <p class="mb-0 text-muted" style="font-size:.88rem;">Atajos de uso frecuente para la jornada.</p>
+                </div>
+                <img src="{% static 'control/img/logo-villa-heroica.png' %}" alt="Colegio Villa Heroica" style="width:64px;height:64px;object-fit:contain;">
+            </div>
+
+            <div class="d-grid gap-3">
+                <a href="{% url 'kiosco' %}" target="_blank" rel="noopener noreferrer" class="btn btn-primary-strong py-3" style="min-height:86px;">
+                    <i class="bi bi-display me-2"></i>Abrir Control de Asistencia
                 </a>
-                <a href="{% url 'marcaje' %}" class="btn btn-outline-secondary">
-                    <i class="bi bi-finger-print me-2"></i>Marcaje Manual
+                <a href="{% url 'exportar_csv' %}?fecha_inicio={{ hoy|date:'Y-m-d' }}&fecha_fin={{ hoy|date:'Y-m-d' }}" class="btn btn-outline-strong py-3" style="min-height:74px;">
+                    <i class="bi bi-file-earmark-arrow-down me-2"></i>EXPORTAR HOY
                 </a>
-                <a href="{% url 'reportes' %}" class="btn btn-outline-secondary">
-                    <i class="bi bi-file-earmark-bar-graph me-2"></i>Ver Reportes
+                <a href="{% url 'crear_empleado' %}" class="btn btn-outline-strong py-3" style="min-height:74px;">
+                    <i class="bi bi-person-plus me-2"></i>NUEVO EMPLEADO RAPIDO
                 </a>
-                <a href="{% url 'lista_empleados' %}" class="btn btn-outline-secondary">
-                    <i class="bi bi-people me-2"></i>Gestionar Empleados
+                <a href="{% url 'marcaje' %}" class="btn btn-outline-strong py-3" style="min-height:74px;">
+                    <i class="bi bi-fingerprint me-2"></i>Registro manual
                 </a>
             </div>
-            <hr class="my-3">
-            <div style="font-size:.82rem; color:#718096;">
-                <div class="d-flex justify-content-between py-1 border-bottom">
-                    <span>Con salida registrada</span><strong>{{ con_salida }}</strong>
+
+            <hr class="my-4">
+            <div class="d-grid gap-2" style="font-size:.9rem;">
+                <div class="d-flex justify-content-between">
+                    <span class="text-muted">Con salida registrada</span>
+                    <strong>{{ con_salida }}</strong>
                 </div>
-                <div class="d-flex justify-content-between py-1">
-                    <span>Tardanzas hoy</span>
-                    <strong {% if total_tardanzas > 0 %}style="color:#856404;"{% endif %}>
-                        {{ total_tardanzas }}
-                    </strong>
+                <div class="d-flex justify-content-between">
+                    <span class="text-muted">Tardanzas hoy</span>
+                    <strong>{{ total_tardanzas }}</strong>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col-lg-8">
+    <div class="col-xl-8">
         <div class="tabla-asistencia">
-            <div class="d-flex justify-content-between align-items-center px-3 py-2"
-                 style="background:#fff; border-bottom:1px solid #e2e8f0;">
-                <span class="fw-bold" style="font-size:.9rem; color:#1a2e4a;">
-                    <i class="bi bi-clock-history me-2"></i>Últimos Registros de Hoy
-                </span>
-                <a href="{% url 'reportes' %}" style="font-size:.8rem;">Ver todos →</a>
+            <div class="d-flex justify-content-between align-items-center px-4 py-3" style="border-bottom:1px solid rgba(16,35,63,.08);">
+                <div>
+                    <div class="fw-bold" style="color:#10233f;">Ultimos registros de hoy</div>
+                    <div class="text-muted" style="font-size:.84rem;">Seguimiento rapido de entradas y salidas.</div>
+                </div>
+                <a href="{% url 'admin_lista_registros' %}" class="btn btn-outline-strong btn-sm">
+                    <i class="bi bi-clock-history me-1"></i>Historial de Asistencia
+                </a>
             </div>
             <table class="table table-hover">
                 <thead>
-                    <tr><th>Empleado</th><th>Entrada</th><th>Salida</th><th>Estado</th></tr>
+                    <tr>
+                        <th>Empleado</th>
+                        <th>Entrada</th>
+                        <th>Salida</th>
+                        <th>Estado</th>
+                    </tr>
                 </thead>
                 <tbody>
                     {% for r in ultimos_registros %}
                     <tr>
                         <td>
-                            <div style="font-weight:600;">{{ r.empleado.nombre_completo }}</div>
-                            <div style="font-size:.75rem;color:#718096;">{{ r.empleado.cargo }}</div>
+                            <div style="font-weight:800;">{{ r.empleado.nombre_completo }}</div>
+                            <div class="text-muted" style="font-size:.8rem;">{{ r.empleado.cargo }}</div>
                         </td>
-                        <td>{% if r.hora_entrada %}<strong>{{ r.hora_entrada|time:"H:i" }}</strong>{% else %}—{% endif %}</td>
-                        <td>{% if r.hora_salida %}<strong>{{ r.hora_salida|time:"H:i" }}</strong>{% else %}—{% endif %}</td>
+                        <td>{% if r.hora_entrada %}<strong>{{ r.hora_entrada|time:"H:i" }}</strong>{% else %}-{% endif %}</td>
+                        <td>{% if r.hora_salida %}<strong>{{ r.hora_salida|time:"H:i" }}</strong>{% else %}-{% endif %}</td>
                         <td>
                             {% if r.tipo_novedad == 'tardanza' %}
                                 <span class="badge-tardanza">Tardanza</span>
                             {% elif r.tipo_novedad == 'salida_anticipada' %}
-                                <span class="badge-salida">Salida ant.</span>
+                                <span class="badge-salida">Salida anticipada</span>
                             {% elif r.hora_salida %}
                                 <span class="badge-salida">Salida</span>
                             {% elif r.hora_entrada %}
                                 <span class="badge-presente">Presente</span>
+                            {% else %}
+                                <span class="badge-ausente">Pendiente</span>
                             {% endif %}
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="4" class="text-center text-muted py-4">
-                            <i class="bi bi-inbox" style="font-size:1.5rem;display:block;margin-bottom:.5rem;"></i>
-                            No hay registros hoy.
+                        <td colspan="4" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox" style="font-size:2rem;display:block;margin-bottom:.5rem;"></i>
+                            No hay registros cargados hoy.
                         </td>
                     </tr>
                     {% endfor %}

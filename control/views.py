@@ -47,8 +47,10 @@ _MENSAJES_ERROR = {
 
 # ── Dashboard ─────────────────────────────────────────────────────────────────
 
-@login_required
 def dashboard(request):
+    if not request.user.is_authenticated:
+        return render(request, 'control/landing.html')
+
     hoy     = timezone.localdate()
     resumen = resumen_diario(hoy)
     total   = Empleado.objects.filter(activo=True).count()
@@ -74,7 +76,8 @@ def dashboard(request):
 
 def kiosco(request):
     from django.conf import settings
-    return render(request, 'control/kiosco/idle.html', {
+    return render(request, 'control/kiosco/cedula.html', {
+        'accion_inicial': request.GET.get('accion', 'entrada'),
         'idle_segundos': getattr(settings, 'KIOSCO_IDLE_SEGUNDOS', 30),
     })
 
@@ -86,7 +89,7 @@ def kiosco_cedula(request):
         accion = 'entrada'
     from django.conf import settings
     return render(request, 'control/kiosco/cedula.html', {
-        'accion': accion,
+        'accion_inicial': accion,
         'idle_segundos': getattr(settings, 'KIOSCO_IDLE_SEGUNDOS', 30),
     })
 

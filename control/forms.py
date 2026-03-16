@@ -5,6 +5,20 @@ from .validators import validar_cedula
 
 
 class EmpleadoForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name in ('hora_entrada', 'hora_salida'):
+            self.fields[field_name].input_formats = ['%I:%M %p', '%H:%M', '%H:%M:%S']
+            self.fields[field_name].widget = forms.TimeInput(
+                format='%I:%M %p',
+                attrs={
+                    'class': 'form-control js-timepicker',
+                    'autocomplete': 'off',
+                    'placeholder': '08:00 AM',
+                    'data-enable-time': 'true',
+                },
+            )
+
     class Meta:
         model  = Empleado
         fields = ['nombre', 'apellido', 'cargo', 'departamento',
@@ -16,12 +30,6 @@ class EmpleadoForm(forms.ModelForm):
             'departamento': forms.Select(attrs={'class': 'form-select'}),
             'cedula':       forms.TextInput(attrs={
                 'class': 'form-control', 'placeholder': 'V-12345678'
-            }),
-            'hora_entrada': forms.TimeInput(attrs={
-                'class': 'form-control', 'type': 'time'
-            }),
-            'hora_salida':  forms.TimeInput(attrs={
-                'class': 'form-control', 'type': 'time'
             }),
             'activo':       forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }

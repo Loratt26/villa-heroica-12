@@ -1,38 +1,126 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Error — Villa Heroica</title>
+<title>Error - Control de Asistencia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
   body {
-    background: #1a2e4a; min-height: 100vh; margin: 0;
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Segoe UI', system-ui, sans-serif;
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(180deg, #f9f2e6 0%, #efe4d0 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    color: #10233f;
+    font-family: 'Manrope', sans-serif;
   }
+
   .card-e {
-    background: #fff; border-radius: 20px;
-    padding: 2.5rem 2rem; width: 100%; max-width: 420px; text-align: center;
+    width: 100%;
+    max-width: 520px;
+    background: rgba(255, 253, 248, 0.95);
+    border-radius: 34px;
+    border: 1px solid rgba(16, 35, 63, 0.08);
+    box-shadow: 0 24px 60px rgba(16, 35, 63, 0.12);
+    padding: 2rem;
+    text-align: center;
   }
-  .icono { font-size: 4rem; margin-bottom: 1rem; }
-  h2 { color: #dc2626; font-size: 1.3rem; font-weight: 700; }
-  p  { color: #374151; font-size: 1rem; }
-  a  { display: block; margin-top: 1.5rem; padding: .9rem;
-       background: #1a2e4a; color: #fff; border-radius: 10px;
-       text-decoration: none; font-weight: 600; font-size: 1rem; }
-  a:hover { background: #2c4a6e; color: #fff; }
+
+  .system-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.7rem 1rem;
+    border-radius: 999px;
+    background: rgba(204, 155, 47, 0.14);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 1.2rem;
+  }
+
+  .logo {
+    width: 92px;
+    height: 92px;
+    object-fit: contain;
+    background: #fff;
+    border-radius: 50%;
+    padding: 0.35rem;
+    margin-bottom: 1rem;
+  }
+
+  .icono {
+    font-size: 4rem;
+    line-height: 1;
+    color: #982f2f;
+  }
+
+  h2 {
+    font-family: 'Archivo', sans-serif;
+    margin-top: 0.9rem;
+    margin-bottom: 0.7rem;
+  }
+
+  p {
+    color: #4d5d73;
+    line-height: 1.7;
+    font-weight: 700;
+  }
+
+  .action-row {
+    display: grid;
+    gap: 0.8rem;
+    margin-top: 1.4rem;
+  }
+
+  .btn-main,
+  .btn-back {
+    min-height: 74px;
+    border-radius: 22px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    font-family: 'Archivo', sans-serif;
+    font-size: 1rem;
+  }
+
+  .btn-main {
+    background: #10233f;
+    color: #fff;
+  }
+
+  .btn-back {
+    background: #fff;
+    color: #10233f;
+    border: 2px solid rgba(16, 35, 63, 0.12);
+  }
 </style>
 </head>
 <body>
 <div class="card-e">
-  <div class="icono">⚠️</div>
+  <div class="system-chip">Sistema de Asistencia v1.0 | Diseñado para Colegio Villa Heroica</div>
+  <div>
+    <img src="{% static 'control/img/logo-villa-heroica.png' %}" alt="Colegio Villa Heroica" class="logo">
+  </div>
+  <div class="icono">!</div>
   <h2>No se pudo registrar</h2>
   <p>{{ mensaje }}</p>
-  <a href="{% url 'kiosco' %}">← Volver al inicio</a>
+  <div class="action-row">
+    <a href="{% url 'kiosco' %}" class="btn-main">CONTINUAR</a>
+    <a href="{% url 'dashboard' %}" class="btn-back">VOLVER</a>
+  </div>
 </div>
 <script>
-  // Auto-redirigir en 8 segundos
   setTimeout(() => window.location.href = '{% url "kiosco" %}', 8000);
 </script>
 </body>

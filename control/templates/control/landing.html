@@ -1,0 +1,250 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Asistencia - Colegio Villa Heroica</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --vh-navy: #10233f;
+            --vh-gold: #cc9b2f;
+            --vh-sand: #f7efe0;
+            --vh-paper: #fffdf8;
+            --vh-line: #d8ceb9;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: 'Manrope', sans-serif;
+            color: var(--vh-navy);
+            background:
+                radial-gradient(circle at top right, rgba(204, 155, 47, 0.18), transparent 24%),
+                linear-gradient(180deg, #f9f3e8 0%, #efe5d4 100%);
+        }
+
+        .hero-wrap {
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 1.25rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .hero-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.4rem 0 1rem;
+        }
+
+        .system-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.7rem;
+            padding: 0.7rem 1rem;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.72);
+            border: 1px solid rgba(16, 35, 63, 0.08);
+            font-size: 0.78rem;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            box-shadow: 0 14px 30px rgba(16, 35, 63, 0.08);
+        }
+
+        .hero-card {
+            margin: auto 0;
+            background: rgba(255, 253, 248, 0.92);
+            border: 1px solid rgba(16, 35, 63, 0.08);
+            border-radius: 36px;
+            padding: 1.5rem;
+            box-shadow: 0 24px 60px rgba(16, 35, 63, 0.12);
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .hero-brand {
+            padding: 1.25rem;
+        }
+
+        .hero-logo {
+            width: 122px;
+            height: 122px;
+            object-fit: contain;
+            background: #fff;
+            border-radius: 50%;
+            padding: 0.4rem;
+            box-shadow: 0 18px 40px rgba(16, 35, 63, 0.12);
+            margin-bottom: 1rem;
+        }
+
+        .hero-kicker {
+            font-size: 0.84rem;
+            font-weight: 800;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: #7b6641;
+            margin-bottom: 0.75rem;
+        }
+
+        .hero-title {
+            font-family: 'Archivo', sans-serif;
+            font-size: clamp(2.3rem, 4.8vw, 4.6rem);
+            line-height: 0.95;
+            margin: 0;
+        }
+
+        .hero-copy {
+            margin-top: 1rem;
+            font-size: 1.02rem;
+            line-height: 1.7;
+            max-width: 560px;
+            color: #44546b;
+        }
+
+        .hero-panel {
+            background: linear-gradient(180deg, #10233f 0%, #18345b 100%);
+            border-radius: 30px;
+            padding: 1.5rem;
+            color: #fff;
+            min-height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .hero-panel h2 {
+            font-family: 'Archivo', sans-serif;
+            font-size: 1.65rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .hero-panel p {
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-cta {
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+        }
+
+        .btn-main {
+            min-height: 96px;
+            border-radius: 24px;
+            border: none;
+            background: #fff;
+            color: var(--vh-navy);
+            font-family: 'Archivo', sans-serif;
+            font-size: clamp(1.25rem, 2vw, 1.6rem);
+            letter-spacing: 0.04em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.85rem;
+            text-decoration: none;
+            box-shadow: 0 16px 34px rgba(0, 0, 0, 0.18);
+        }
+
+        .btn-main:hover {
+            color: var(--vh-navy);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.55rem;
+            min-height: 60px;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            background: transparent;
+            color: #fff;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .hero-footer {
+            text-align: center;
+            padding-top: 1rem;
+            color: #58657a;
+            font-size: 0.84rem;
+            font-weight: 700;
+        }
+
+        @media (max-width: 860px) {
+            .hero-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-top {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="hero-wrap">
+        <div class="hero-top">
+            <div class="system-chip">
+                <i class="bi bi-shield-check"></i>
+                Sistema de Asistencia v1.0 | Diseñado para Colegio Villa Heroica
+            </div>
+            <a href="{% url 'login' %}" class="btn btn-outline-dark rounded-pill px-4 py-2 fw-bold">
+                <i class="bi bi-person-lock me-2"></i>Acceso administrativo
+            </a>
+        </div>
+
+        <div class="hero-card">
+            <div class="hero-grid">
+                <div class="hero-brand">
+                    <img src="{% static 'control/img/logo-villa-heroica.png' %}" alt="Colegio Villa Heroica" class="hero-logo">
+                    <div class="hero-kicker">Colegio Villa Heroica</div>
+                    <h1 class="hero-title">Control de<br>Asistencia</h1>
+                    <p class="hero-copy">
+                        Flujo rapido para entrada y salida diaria, pensado para uso escolar real:
+                        claro bajo sol, facil desde movil y listo para jornadas con alto volumen de personas.
+                    </p>
+                </div>
+
+                <div class="hero-panel">
+                    <h2>Registro inmediato</h2>
+                    <p>Presione el acceso principal para comenzar el flujo publico sin iniciar sesion.</p>
+                    <div class="hero-cta">
+                        <a href="{% url 'kiosco' %}" class="btn-main">
+                            <i class="bi bi-person-badge"></i>
+                            REGISTRAR ASISTENCIA
+                        </a>
+                        <a href="{% url 'login' %}" class="btn-secondary">
+                            <i class="bi bi-box-arrow-in-right"></i>
+                            Iniciar sesion
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="hero-footer">
+            Sistema de Asistencia v1.0 | Diseñado para Colegio Villa Heroica
+        </div>
+    </div>
+</body>
+</html>
