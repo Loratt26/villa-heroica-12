@@ -12,6 +12,7 @@ from django.conf import settings
 
 from ..models import Empleado, RegistroAsistencia, EstadoRegistro, Feriado
 from .auditoria import registrar as audit, audit_marcaje
+from .tardanzas import sync_tardanza_alert_for_employee_week
 
 logger = logging.getLogger('control.asistencia')
 
@@ -207,6 +208,7 @@ def registrar_entrada(
         }
         # Auditoría dentro de la misma transacción
         audit_marcaje(resultado, 'entrada', empleado, ip)
+        sync_tardanza_alert_for_employee_week(empleado, hoy)
         return resultado
 
     except IntegrityError:
@@ -324,6 +326,7 @@ def registrar_salida(
             'registro': registro, 'evaluacion': evaluacion,
         }
         audit_marcaje(resultado, 'salida', empleado, ip)
+        sync_tardanza_alert_for_employee_week(empleado, hoy)
         return resultado
 
     except IntegrityError:

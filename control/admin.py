@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.contrib.auth.models import User
 from .models import (
     Departamento, Sede, Feriado, Empleado,
-    RegistroAsistencia, AuditLog, KioscoToken,
+    RegistroAsistencia, AuditLog, KioscoToken, AlertaTardanza, SystemSettings,
 )
 
 try:
@@ -69,6 +69,27 @@ class AuditLogAdmin(admin.ModelAdmin):
 class KioscoTokenAdmin(admin.ModelAdmin):
     list_display = ('empleado', 'accion', 'usado', 'creado_at', 'expira_at')
     readonly_fields = ('token', 'creado_at')
+
+
+@admin.register(AlertaTardanza)
+class AlertaTardanzaAdmin(admin.ModelAdmin):
+    list_display = ('empleado', 'semana', 'cantidad_tardanzas', 'resuelta', 'updated_at')
+    list_filter = ('resuelta', 'semana', 'empleado__departamento')
+    search_fields = ('empleado__nombre', 'empleado__apellido', 'empleado__cedula')
+    ordering = ('resuelta', '-cantidad_tardanzas', '-semana')
+
+
+@admin.register(SystemSettings)
+class SystemSettingsAdmin(admin.ModelAdmin):
+    list_display = ('tardanzas_alerta_limite', 'updated_at')
+
+    def has_add_permission(self, request):
+        if SystemSettings.objects.exists():
+            return False
+        return request.user.is_superuser
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(User)

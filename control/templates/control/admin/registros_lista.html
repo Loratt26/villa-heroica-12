@@ -72,6 +72,7 @@
                 <th>Salida</th>
                 <th>Horas</th>
                 <th>Novedad</th>
+                <th>Motivo</th>
                 <th>Estado</th>
                 <th>Acciones</th>
             </tr>
@@ -91,6 +92,9 @@
                     {% elif r.tipo_novedad == 'salida_anticipada' %}<span class="badge-salida">Salida anticipada</span>
                     {% else %}<span class="badge-presente">Normal</span>{% endif %}
                 </td>
+                <td style="font-size:.82rem;color:#516277;max-width:220px;">
+                    {{ r.motivo|default:"-" }}
+                </td>
                 <td>
                     <span style="font-size:.78rem;background:#f1f5f9;padding:.28em .7em;border-radius:999px;color:#475569;font-weight:700;">
                         {{ r.get_estado_display }}
@@ -109,7 +113,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="7" class="text-center text-muted py-4">Sin registros para esta fecha.</td>
+                <td colspan="8" class="text-center text-muted py-4">Sin registros para esta fecha.</td>
             </tr>
             {% endfor %}
         </tbody>

@@ -83,7 +83,7 @@
                 <a href="{% url 'kiosco' %}" target="_blank" rel="noopener noreferrer" class="btn btn-primary-strong py-3" style="min-height:86px;" data-loading-link data-loading-text="Abriendo panel...">
                     <i class="bi bi-display me-2"></i>Abrir Control de Asistencia
                 </a>
-                <a href="{% url 'exportar_csv' %}?fecha_inicio={{ hoy|date:'Y-m-d' }}&fecha_fin={{ hoy|date:'Y-m-d' }}" class="btn btn-outline-strong py-3" style="min-height:74px;" data-loading-link data-loading-text="Exportando...">
+                <a href="{% url 'exportar_csv' %}?fecha_inicio={{ hoy|date:'Y-m-d' }}&fecha_fin={{ hoy|date:'Y-m-d' }}" class="btn btn-outline-strong py-3" style="min-height:74px;" data-download-link data-loading-text="Exportando...">
                     <i class="bi bi-file-earmark-arrow-down me-2"></i>Exportar hoy
                 </a>
                 <a href="{% url 'crear_empleado' %}" class="btn btn-outline-strong py-3" style="min-height:74px;" data-loading-link data-loading-text="Abriendo formulario...">
@@ -92,6 +92,11 @@
                 <a href="{% url 'marcaje' %}" class="btn btn-outline-strong py-3" style="min-height:74px;" data-loading-link data-loading-text="Abriendo registro...">
                     <i class="bi bi-fingerprint me-2"></i>Registro manual
                 </a>
+                {% if request.user.is_staff or request.user.is_superuser %}
+                <a href="{% url 'alertas_tardanza' %}" class="btn btn-outline-strong py-3" style="min-height:74px;" data-loading-link data-loading-text="Abriendo alertas...">
+                    <i class="bi bi-exclamation-diamond me-2"></i>Alertas activas: {{ alertas_activas }}
+                </a>
+                {% endif %}
             </div>
 
             <hr class="my-4">

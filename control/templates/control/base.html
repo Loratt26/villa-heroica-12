@@ -503,6 +503,14 @@
             <a href="{% url 'admin_lista_registros' %}" class="nav-link {% if 'admin_' in request.resolver_match.url_name %}active{% endif %}">
                 <i class="bi bi-clock-history"></i> Historial de Asistencia
             </a>
+            <a href="{% url 'alertas_tardanza' %}" class="nav-link {% if 'alerta_tardanza' in request.resolver_match.url_name or request.resolver_match.url_name == 'alertas_tardanza' %}active{% endif %}">
+                <i class="bi bi-exclamation-diamond"></i> Alertas
+            </a>
+            {% if request.user.is_superuser %}
+            <a href="{% url 'configuracion_sistema' %}" class="nav-link {% if request.resolver_match.url_name == 'configuracion_sistema' %}active{% endif %}">
+                <i class="bi bi-sliders"></i> Configuracion
+            </a>
+            {% endif %}
         </div>
         {% endif %}
 

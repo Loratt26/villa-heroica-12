@@ -7,6 +7,7 @@ from django.db import transaction
 from django.utils import timezone
 from ..models import RegistroAsistencia, EstadoRegistro
 from .auditoria import registrar as audit
+from .tardanzas import sync_tardanza_alert_for_employee_week
 
 MAX_JORNADA_H = 16
 
@@ -88,6 +89,7 @@ def editar_registro(
         update_fields.append('tipo_novedad')
 
     registro.save(update_fields=update_fields)
+    sync_tardanza_alert_for_employee_week(registro.empleado, registro.fecha)
 
     audit(
         'EDIT_REGISTRO',
@@ -122,6 +124,8 @@ def eliminar_registro(
     if registro.estado == EstadoRegistro.CERRADO:
         return {'ok': False, 'codigo': 'REGISTRO_CERRADO'}
 
+    empleado = registro.empleado
+    fecha = registro.fecha
     snapshot = registro.snapshot()
     snapshot['fecha'] = str(registro.fecha)
     snapshot['empleado'] = str(registro.empleado)
@@ -137,4 +141,5 @@ def eliminar_registro(
     )
 
     registro.delete()
+    sync_tardanza_alert_for_employee_week(empleado, fecha)
     return {'ok': True, 'codigo': 'ELIMINADO'}

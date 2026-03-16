@@ -25,6 +25,10 @@ urlpatterns = [
     # ── Reportes ───────────────────────────────────────────────────
     path('reportes/',          views.reportes,     name='reportes'),
     path('reportes/exportar/', views.exportar_csv, name='exportar_csv'),
+    path('alertas/',           views.alertas_tardanza,          name='alertas_tardanza'),
+    path('alertas/<int:pk>/',  views.alerta_tardanza_detalle,   name='alerta_tardanza_detalle'),
+    path('alertas/<int:pk>/exportar/', views.alerta_tardanza_exportar, name='alerta_tardanza_exportar'),
+    path('configuracion/',     views.configuracion_sistema,     name='configuracion_sistema'),
 
     # ── Usuarios ───────────────────────────────────────────────────
     path('usuarios/',                    views.lista_usuarios,           name='lista_usuarios'),

@@ -56,7 +56,7 @@
     {% if not ausencias %}
     <a href="{% url 'exportar_csv' %}?{{ request.GET.urlencode }}"
        class="btn btn-sm fw-semibold"
-       style="background:#16a34a;color:#fff;border-radius:8px;">
+       style="background:#16a34a;color:#fff;border-radius:8px;" data-download-link data-loading-text="Exportando...">
         <i class="bi bi-file-earmark-excel me-1"></i>Exportar CSV
     </a>
     {% endif %}
@@ -75,6 +75,7 @@
                 <th>Salida</th>
                 <th>Horas</th>
                 <th>Novedad</th>
+                <th>Motivo</th>
             </tr>
         </thead>
         <tbody>
@@ -107,10 +108,11 @@
                         <span class="badge-presente">Normal</span>
                     {% endif %}
                 </td>
+                <td style="font-size:.82rem;color:#516277;">{{ r.motivo|default:"—" }}</td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="7" class="text-center text-muted py-5">
+                <td colspan="8" class="text-center text-muted py-5">
                     <i class="bi bi-inbox" style="font-size:2rem;display:block;margin-bottom:.5rem;"></i>
                     No hay registros para los filtros seleccionados.
                 </td>

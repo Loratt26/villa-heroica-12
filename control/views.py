@@ -12,8 +12,8 @@ from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.csrf import csrf_protect
 
 from .forms import (CambiarPasswordForm, CrearUsuarioForm, EditarUsuarioForm,
-                    EmpleadoForm, ReporteForm)
-from .models import Empleado, RegistroAsistencia, Departamento
+                    EmpleadoForm, ReporteForm, SystemSettingsForm)
+from .models import Empleado, RegistroAsistencia, Departamento, AlertaTardanza, SystemSettings
 from .validators import normalizar_cedula, cedula_es_valida
 from .services.autofill_cache import buscar_empleado_cached, check_rate_limit
 from .services.kiosco_token import emitir_token, consumir_token
@@ -22,12 +22,23 @@ from .services.asistencia import (evaluar_entrada, evaluar_salida,
                                    _get_ip)
 from .services.reportes import (generar_csv, inasistencias,
                                   registros_filtrados, resumen_diario)
+from .services.tardanzas import (
+    fin_semana,
+    generar_csv_tardanzas,
+    refresh_all_tardanza_alerts,
+    registros_tardanza_de_alerta,
+    sync_tardanza_alert_for_employee_week,
+)
 
 logger = logging.getLogger('control.asistencia')
 
 
 def es_admin(user):
     return user.is_staff or user.is_superuser
+
+
+def es_superuser(user):
+    return user.is_superuser
 
 
 def _safe_media_url(request, field_file):
@@ -60,6 +71,7 @@ def dashboard(request):
     if not request.user.is_authenticated:
         return render(request, 'control/landing.html')
 
+    refresh_all_tardanza_alerts()
     hoy     = timezone.localdate()
     resumen = resumen_diario(hoy)
     total   = Empleado.objects.filter(activo=True).count()
@@ -69,6 +81,7 @@ def dashboard(request):
         .select_related('empleado')
         .order_by('-hora_entrada')[:8]
     )
+    alertas_activas = AlertaTardanza.objects.filter(resuelta=False).count()
     return render(request, 'control/dashboard.html', {
         'hoy':             hoy,
         'total_empleados': total,
@@ -77,6 +90,7 @@ def dashboard(request):
         'ausentes':        max(total - resumen['total_entradas'], 0),
         'con_salida':      resumen['total_salidas'],
         'total_tardanzas': resumen['total_tardanzas'],
+        'alertas_activas': alertas_activas,
         'ultimos_registros': ultimos,
     })
 
@@ -440,6 +454,79 @@ def exportar_csv(request):
 
     logger.info('exportar_csv: usuario=%s filtros=%s', request.user, request.GET)
     return response
+
+
+@login_required
+@user_passes_test(es_admin, login_url='/')
+def alertas_tardanza(request):
+    refresh_all_tardanza_alerts()
+    alertas = (
+        AlertaTardanza.objects
+        .select_related('empleado', 'empleado__departamento')
+        .order_by('resuelta', '-cantidad_tardanzas', '-semana', 'empleado__apellido', 'empleado__nombre')
+    )
+    return render(request, 'control/alertas_lista.html', {
+        'alertas': alertas,
+    })
+
+
+@login_required
+@user_passes_test(es_admin, login_url='/')
+def alerta_tardanza_detalle(request, pk):
+    alerta = get_object_or_404(
+        AlertaTardanza.objects.select_related('empleado', 'empleado__departamento'),
+        pk=pk,
+    )
+    sync_tardanza_alert_for_employee_week(alerta.empleado, alerta.semana)
+    alerta.refresh_from_db()
+
+    if request.method == 'POST':
+        alerta.resuelta = True
+        alerta.save(update_fields=['resuelta', 'updated_at'])
+        messages.success(request, 'Alerta marcada como resuelta.')
+        return redirect('alerta_tardanza_detalle', pk=alerta.pk)
+
+    registros = registros_tardanza_de_alerta(alerta)
+    return render(request, 'control/alerta_detalle.html', {
+        'alerta': alerta,
+        'registros': registros,
+        'semana_fin': fin_semana(alerta.semana),
+    })
+
+
+@login_required
+@user_passes_test(es_admin, login_url='/')
+def alerta_tardanza_exportar(request, pk):
+    alerta = get_object_or_404(
+        AlertaTardanza.objects.select_related('empleado', 'empleado__departamento'),
+        pk=pk,
+    )
+    registros = registros_tardanza_de_alerta(alerta)
+    nombre_archivo = f'tardanzas_{alerta.empleado.cedula or alerta.empleado.pk}_{alerta.semana}.csv'
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = f'attachment; filename="{nombre_archivo}"'
+    response.write(generar_csv_tardanzas(alerta, registros))
+    return response
+
+
+@login_required
+@user_passes_test(es_superuser, login_url='/')
+def configuracion_sistema(request):
+    settings_obj = SystemSettings.load()
+    if request.method == 'POST':
+        form = SystemSettingsForm(request.POST, instance=settings_obj)
+        if form.is_valid():
+            form.save()
+            refresh_all_tardanza_alerts()
+            messages.success(request, 'Configuracion del sistema actualizada.')
+            return redirect('configuracion_sistema')
+    else:
+        form = SystemSettingsForm(instance=settings_obj)
+
+    return render(request, 'control/configuracion_sistema.html', {
+        'form': form,
+        'settings_obj': settings_obj,
+    })
 
 
 # ── Usuarios ──────────────────────────────────────────────────────────────────

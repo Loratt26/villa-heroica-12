@@ -296,3 +296,50 @@ class KioscoToken(models.Model):
 
     def es_valido(self) -> bool:
         return not self.usado and timezone.now() < self.expira_at
+
+
+class SystemSettings(models.Model):
+    tardanzas_alerta_limite = models.PositiveIntegerField(default=3)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'system_settings'
+        verbose_name = 'Configuracion del sistema'
+        verbose_name_plural = 'Configuracion del sistema'
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def load(cls):
+        settings_obj, _ = cls.objects.get_or_create(pk=1, defaults={'tardanzas_alerta_limite': 3})
+        return settings_obj
+
+    def __str__(self):
+        return 'Configuracion del sistema'
+
+
+class AlertaTardanza(models.Model):
+    empleado = models.ForeignKey(Empleado, on_delete=models.CASCADE, related_name='alertas_tardanza')
+    semana = models.DateField(help_text='Inicio de semana (lunes).', db_index=True)
+    cantidad_tardanzas = models.PositiveIntegerField(default=0)
+    resuelta = models.BooleanField(default=False, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'alerta_tardanza'
+        verbose_name = 'Alerta de tardanza'
+        verbose_name_plural = 'Alertas de tardanza'
+        ordering = ['resuelta', '-cantidad_tardanzas', '-semana', 'empleado__apellido', 'empleado__nombre']
+        constraints = [
+            models.UniqueConstraint(fields=['empleado', 'semana'], name='alerta_tardanza_emp_semana_uniq'),
+        ]
+        indexes = [
+            models.Index(fields=['resuelta', 'cantidad_tardanzas'], name='alerta_resuelta_cant_idx'),
+        ]
+
+    def __str__(self):
+        return f'{self.empleado} - {self.semana:%d/%m/%Y}'

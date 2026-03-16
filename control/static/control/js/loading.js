@@ -1,4 +1,58 @@
 (function () {
+  function extractFilename(contentDisposition, fallbackHref) {
+    if (contentDisposition) {
+      var utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+      if (utf8Match && utf8Match[1]) {
+        return decodeURIComponent(utf8Match[1]);
+      }
+
+      var asciiMatch = contentDisposition.match(/filename=\"?([^\";]+)\"?/i);
+      if (asciiMatch && asciiMatch[1]) {
+        return asciiMatch[1];
+      }
+    }
+
+    try {
+      var url = new URL(fallbackHref, window.location.origin);
+      var lastSegment = url.pathname.split('/').filter(Boolean).pop();
+      return lastSegment || 'descarga.csv';
+    } catch (error) {
+      return 'descarga.csv';
+    }
+  }
+
+  async function downloadLink(link) {
+    activateLoading(link);
+
+    try {
+      var response = await fetch(link.href, {
+        credentials: 'same-origin',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('download-failed');
+      }
+
+      var blob = await response.blob();
+      var filename = extractFilename(response.headers.get('Content-Disposition'), link.href);
+      var objectUrl = window.URL.createObjectURL(blob);
+      var anchor = document.createElement('a');
+      anchor.href = objectUrl;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.URL.revokeObjectURL(objectUrl);
+      resetLoading(link);
+    } catch (error) {
+      resetLoading(link);
+      window.location.href = link.href;
+    }
+  }
+
   function getOriginalLabel(element) {
     if (element.tagName === 'INPUT') {
       return element.value;
@@ -77,6 +131,13 @@
   });
 
   document.addEventListener('click', function (event) {
+    var download = event.target.closest('a[data-download-link]');
+    if (download && !download.hasAttribute('data-no-loading')) {
+      event.preventDefault();
+      downloadLink(download);
+      return;
+    }
+
     var link = event.target.closest('a[data-loading-link], a.btn, a.btn-main, a.btn-secondary, a.btn-back, a.link-secondary, a.nav-link');
     if (link && !link.hasAttribute('data-no-loading') && !link.hasAttribute('data-bs-toggle')) {
       if (link.target === '_blank') {

@@ -1,0 +1,74 @@
+{% extends 'control/base.html' %}
+{% block title %}Alertas de Tardanza{% endblock %}
+{% block content %}
+<style>
+    .alerta-activa {
+        background: rgba(159, 45, 45, 0.08);
+    }
+
+    .alerta-activa td {
+        border-color: rgba(159, 45, 45, 0.18);
+    }
+</style>
+
+<div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-3">
+    <div>
+        <h1><i class="bi bi-exclamation-diamond me-2" style="color:#9f2d2d;"></i>Alertas</h1>
+        <p>Seguimiento semanal de tardanzas del personal.</p>
+    </div>
+    {% if request.user.is_superuser %}
+    <a href="{% url 'configuracion_sistema' %}" class="btn btn-outline-strong" data-loading-link data-loading-text="Abriendo configuracion...">
+        <i class="bi bi-sliders me-1"></i>Configuracion
+    </a>
+    {% endif %}
+</div>
+
+<div class="tabla-asistencia">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Cedula</th>
+                <th>Departamento</th>
+                <th>Semana</th>
+                <th>Cantidad tardanzas</th>
+                <th>Estado alerta</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for alerta in alertas %}
+            <tr class="{% if not alerta.resuelta %}alerta-activa{% endif %}">
+                <td>
+                    <div style="font-weight:700;">{{ alerta.empleado }}</div>
+                    <div style="font-size:.78rem;color:#718096;">{{ alerta.empleado.cargo }}</div>
+                </td>
+                <td><code>{{ alerta.empleado.cedula|default:"-" }}</code></td>
+                <td>{{ alerta.empleado.departamento }}</td>
+                <td>{{ alerta.semana|date:"d/m/Y" }}</td>
+                <td style="font-weight:800;color:#10233f;">{{ alerta.cantidad_tardanzas }}</td>
+                <td>
+                    {% if alerta.resuelta %}
+                    <span class="badge-presente">Resuelta</span>
+                    {% else %}
+                    <span class="badge-ausente">Activa</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'alerta_tardanza_detalle' alerta.pk %}" class="btn btn-outline-strong btn-sm" data-loading-link data-loading-text="Abriendo alerta...">
+                        <i class="bi bi-eye me-1"></i>Ver detalle
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center text-muted py-5">
+                    <i class="bi bi-inbox" style="font-size:2rem;display:block;margin-bottom:.5rem;"></i>
+                    No hay alertas registradas.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

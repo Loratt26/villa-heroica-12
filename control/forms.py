@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.utils import timezone
-from .models import Empleado
+from .models import Empleado, SystemSettings
 from .validators import validar_cedula
 
 
@@ -170,3 +170,18 @@ class CambiarPasswordForm(forms.Form):
         if p1 and p2 and p1 != p2:
             raise forms.ValidationError('Las contraseñas no coinciden.')
         return p2
+
+
+class SystemSettingsForm(forms.ModelForm):
+    class Meta:
+        model = SystemSettings
+        fields = ['tardanzas_alerta_limite']
+        widgets = {
+            'tardanzas_alerta_limite': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
+        }
+
+    def clean_tardanzas_alerta_limite(self):
+        value = self.cleaned_data.get('tardanzas_alerta_limite')
+        if value is None or value < 1:
+            raise forms.ValidationError('El limite debe ser mayor o igual a 1.')
+        return value
