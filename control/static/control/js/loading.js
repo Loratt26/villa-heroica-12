@@ -77,8 +77,8 @@
   });
 
   document.addEventListener('click', function (event) {
-    var link = event.target.closest('a[data-loading-link]');
-    if (link && !link.hasAttribute('data-no-loading')) {
+    var link = event.target.closest('a[data-loading-link], a.btn, a.btn-main, a.btn-secondary, a.btn-back, a.link-secondary, a.nav-link');
+    if (link && !link.hasAttribute('data-no-loading') && !link.hasAttribute('data-bs-toggle')) {
       if (link.target === '_blank') {
         activateLoading(link);
         window.setTimeout(function () {

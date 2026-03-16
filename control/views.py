@@ -30,6 +30,15 @@ def es_admin(user):
     return user.is_staff or user.is_superuser
 
 
+def _safe_media_url(request, field_file):
+    if not field_file or not getattr(field_file, 'name', ''):
+        return None
+    try:
+        return request.build_absolute_uri(field_file.url)
+    except Exception:
+        return None
+
+
 # Mapa completo de códigos → mensajes de usuario
 _MENSAJES_ERROR = {
     'ENTRADA_DUPLICADA':      'Ya tienes entrada registrada hoy.',
@@ -137,7 +146,7 @@ def api_buscar_cedula(request):
         'apellido':        emp.apellido,
         'cargo':           emp.cargo,
         'departamento':    emp.departamento.nombre,
-        'foto_url':        emp.foto_url(),
+        'foto_url':        _safe_media_url(request, emp.foto),
         'tiene_entrada':   bool(reg_hoy and reg_hoy.hora_entrada),
         'tiene_salida':    bool(reg_hoy and reg_hoy.hora_salida),
         'hora_entrada_hoy': (

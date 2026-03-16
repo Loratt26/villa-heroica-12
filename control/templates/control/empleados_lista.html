@@ -71,8 +71,8 @@
                 <td style="color:#718096;font-size:.8rem;">{{ forloop.counter }}</td>
                 <td>
                     <div class="d-flex align-items-center gap-2">
-                        {% if emp.foto_url %}
-                        <img src="{{ emp.foto_url }}" alt=""
+                        {% if emp.foto %}
+                        <img src="{{ emp.foto.url }}" alt=""
                              style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;">
                         {% else %}
                         <div style="width:32px;height:32px;background:#e8f0fe;border-radius:50%;

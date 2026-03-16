@@ -8,14 +8,14 @@ class EmpleadoForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name in ('hora_entrada', 'hora_salida'):
-            self.fields[field_name].input_formats = ['%I:%M %p', '%H:%M', '%H:%M:%S']
+            self.fields[field_name].input_formats = ['%H:%M', '%H:%M:%S', '%I:%M %p']
             self.fields[field_name].widget = forms.TimeInput(
-                format='%I:%M %p',
+                format='%H:%M',
                 attrs={
-                    'class': 'form-control js-timepicker',
-                    'autocomplete': 'off',
-                    'placeholder': '08:00 AM',
-                    'data-enable-time': 'true',
+                    'class': 'form-control',
+                    'type': 'time',
+                    'step': '300',
+                    'inputmode': 'numeric',
                 },
             )
 

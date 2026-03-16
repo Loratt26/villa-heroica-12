@@ -312,7 +312,7 @@
   .btn-action {
     min-height: 84px;
     border-radius: 22px;
-    border: 3px solid transparent;
+    border: 3px solid rgba(16, 35, 63, 0.16);
     font-family: 'Archivo', sans-serif;
     font-size: 1.15rem;
     letter-spacing: 0.02em;
@@ -325,14 +325,33 @@
     transition: 0.16s ease;
     white-space: normal;
     text-align: center;
+    background: #334155;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
   }
 
-  .btn-action.entrada { background: var(--vh-green); }
-  .btn-action.salida { background: var(--vh-red); }
+  .btn-action:not(.selected) {
+    filter: grayscale(0.2) saturate(0.35);
+    opacity: 0.92;
+    transform: scale(1);
+  }
+
+  .btn-action.entrada.selected {
+    background: linear-gradient(180deg, #22c55e 0%, #15803d 100%);
+    border-color: rgba(20, 83, 45, 0.95);
+    box-shadow: 0 18px 38px rgba(21, 128, 61, 0.32);
+    transform: scale(1.02);
+  }
+
+  .btn-action.salida.selected {
+    background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%);
+    border-color: rgba(127, 29, 29, 0.95);
+    box-shadow: 0 18px 38px rgba(185, 28, 28, 0.32);
+    transform: scale(1.02);
+  }
+
   .btn-action.selected {
-    transform: translateY(-1px);
-    box-shadow: 0 16px 30px rgba(16, 35, 63, 0.18);
-    border-color: rgba(255,255,255,.88);
+    filter: none;
+    opacity: 1;
   }
 
   .extra-fields {
@@ -603,10 +622,19 @@ let abortController = null;
 let debounceHandle = null;
 let idleTimer = null;
 
+function hasStartedInput() {
+  return Boolean(
+    digitsInput.value.trim().length ||
+    motivoInput.value.trim().length ||
+    autorizadorSelect.value
+  );
+}
+
 function setAction(action) {
   selectedAction = action === 'salida' ? 'salida' : 'entrada';
   actionButtons.forEach((button) => {
     button.classList.toggle('selected', button.dataset.action === selectedAction);
+    button.setAttribute('aria-pressed', String(button.dataset.action === selectedAction));
   });
   updateEvaluationUI();
   updateContinueState();
@@ -614,6 +642,10 @@ function setAction(action) {
 
 function resetIdle() {
   clearTimeout(idleTimer);
+  if (hasStartedInput()) {
+    idleTimer = null;
+    return;
+  }
   idleTimer = setTimeout(() => window.location.href = '{% url "kiosco" %}', IDLE_SEG * 1000);
 }
 
@@ -634,6 +666,7 @@ function clearEmployee() {
   hiddenMotivo.value = '';
   hiddenAutorizador.value = '';
   updateContinueState();
+  resetIdle();
 }
 
 function showFeedback(message, type) {
@@ -759,6 +792,7 @@ digitsInput.addEventListener('input', () => {
   updatePreview();
   clearTimeout(debounceHandle);
   debounceHandle = setTimeout(lookupCedula, 260);
+  resetIdle();
 });
 
 actionButtons.forEach((button) => {

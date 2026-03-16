@@ -75,7 +75,7 @@ def buscar_empleado_cached(cedula_raw: str) -> dict:
         'apellido':     emp.apellido,
         'cargo':        emp.cargo,
         'departamento': emp.departamento.nombre,
-        'foto_url':     emp.foto_url(),
+        'foto_url':     emp.foto.url if emp.foto else None,
         '_cedula':      cedula,
     }
 

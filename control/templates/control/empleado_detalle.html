@@ -18,8 +18,8 @@
 <div class="row g-3">
     <div class="col-lg-4">
         <div class="card-form text-center mb-3">
-            {% if empleado.foto_url %}
-            <img src="{{ empleado.foto_url }}" alt="{{ empleado }}"
+            {% if empleado.foto %}
+            <img src="{{ empleado.foto.url }}" alt="{{ empleado }}"
                  style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid #e2e8f0;margin-bottom:1rem;">
             {% else %}
             <div style="width:100px;height:100px;border-radius:50%;background:#e8f0fe;
