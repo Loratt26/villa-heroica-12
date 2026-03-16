@@ -87,7 +87,7 @@ def buscar_empleado_cached(cedula_raw: str) -> dict:
 
 def _enriquecer_con_estado_dia(base: dict) -> dict:
     """Agrega estado del día (entrada/salida) y evaluaciones. No se cachea."""
-    from .asistencia import evaluar_entrada, evaluar_salida
+    from .asistencia import evaluar_entrada, evaluar_salida, serializar_evaluacion
 
     emp_id = base['id']
     hoy    = timezone.localdate()
@@ -99,8 +99,8 @@ def _enriquecer_con_estado_dia(base: dict) -> dict:
 
     try:
         emp = Empleado.objects.get(pk=emp_id)
-        eval_entrada = evaluar_entrada(emp, ahora)
-        eval_salida  = evaluar_salida(emp, ahora)
+        eval_entrada = serializar_evaluacion(evaluar_entrada(emp, ahora))
+        eval_salida = serializar_evaluacion(evaluar_salida(emp, ahora, registro=reg_hoy))
     except Empleado.DoesNotExist:
         eval_entrada = eval_salida = {'estado': 'normal', 'requiere_motivo': False, 'mensaje': ''}
 

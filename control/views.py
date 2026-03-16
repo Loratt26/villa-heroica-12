@@ -19,7 +19,7 @@ from .services.autofill_cache import buscar_empleado_cached, check_rate_limit
 from .services.kiosco_token import emitir_token, consumir_token
 from .services.asistencia import (evaluar_entrada, evaluar_salida,
                                    registrar_entrada, registrar_salida,
-                                   _get_ip)
+                                   serializar_evaluacion, _get_ip)
 from .services.reportes import (generar_csv, inasistencias,
                                   registros_filtrados, resumen_diario)
 from .services.tardanzas import (
@@ -60,6 +60,7 @@ _MENSAJES_ERROR = {
     'AUTORIZACION_INVALIDA':  'El autorizador seleccionado no es válido.',
     'MOTIVO_REQUERIDO':       'Debes escribir el motivo.',
     'HORA_INVALIDA':          'La hora de salida no puede ser anterior o igual a la entrada.',
+    'JORNADA_MINIMA_NO_CUMPLIDA': 'Debe cumplir al menos 4 horas de jornada antes de marcar salida.',
     'DOBLE_SUBMIT':           'Solicitud duplicada. Espera un momento e intenta de nuevo.',
     'ERROR_DB':               'Error temporal del sistema. Por favor intenta de nuevo.',
 }
@@ -150,8 +151,8 @@ def api_buscar_cedula(request):
     ahora   = timezone.localtime().time()
     reg_hoy = RegistroAsistencia.objects.filter(empleado=emp, fecha=hoy).first()
 
-    eval_entrada = evaluar_entrada(emp, ahora)
-    eval_salida  = evaluar_salida(emp, ahora)
+    eval_entrada = serializar_evaluacion(evaluar_entrada(emp, ahora))
+    eval_salida  = serializar_evaluacion(evaluar_salida(emp, ahora, registro=reg_hoy))
 
     return JsonResponse({
         'encontrado':      True,
