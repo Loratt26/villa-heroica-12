@@ -1,10 +1,12 @@
 import logging
 import re
-from datetime import date
+import csv
+from datetime import date, timedelta
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
+from django.db.models import Count, OuterRef, Q, Subquery
 from django.http import JsonResponse, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -41,6 +43,27 @@ def es_superuser(user):
     return user.is_superuser
 
 
+def _inicio_semana(fecha_ref=None):
+    fecha_ref = fecha_ref or timezone.localdate()
+    return fecha_ref - timedelta(days=fecha_ref.weekday())
+
+
+def _fin_semana(fecha_ref=None):
+    return _inicio_semana(fecha_ref) + timedelta(days=6)
+
+
+def _inicio_mes(fecha_ref=None):
+    fecha_ref = fecha_ref or timezone.localdate()
+    return fecha_ref.replace(day=1)
+
+
+def _autorizadores_institucionales():
+    return Empleado.objects.filter(
+        departamento__nombre__in=['Dirección', 'Coordinación'],
+        activo=True,
+    ).select_related('departamento').order_by('apellido', 'nombre')
+
+
 def _safe_media_url(request, field_file):
     if not field_file or not getattr(field_file, 'name', ''):
         return None
@@ -72,26 +95,37 @@ def dashboard(request):
     if not request.user.is_authenticated:
         return render(request, 'control/landing.html')
 
-    refresh_all_tardanza_alerts()
-    hoy     = timezone.localdate()
+    hoy = timezone.localdate()
+    semana_inicio = _inicio_semana(hoy)
+    semana_fin = _fin_semana(hoy)
     resumen = resumen_diario(hoy)
-    total   = Empleado.objects.filter(activo=True).count()
+    total = Empleado.objects.filter(activo=True).count()
     ultimos = (
         RegistroAsistencia.objects
         .filter(fecha=hoy)
-        .select_related('empleado')
-        .order_by('-hora_entrada')[:8]
+        .select_related('empleado', 'empleado__departamento', 'autorizado_por')
+        .order_by('-updated_at', '-hora_entrada')[:12]
     )
-    alertas_activas = AlertaTardanza.objects.filter(resuelta=False).count()
+    trabajadores_tardanza_semana = (
+        RegistroAsistencia.objects
+        .filter(
+            tipo_novedad='tardanza',
+            fecha__gte=semana_inicio,
+            fecha__lte=semana_fin,
+        )
+        .values('empleado_id')
+        .distinct()
+        .count()
+    )
     return render(request, 'control/dashboard.html', {
-        'hoy':             hoy,
+        'hoy': hoy,
         'total_empleados': total,
-        'con_entrada':     resumen['total_entradas'],
-        'presentes':       max(resumen['total_entradas'] - resumen['total_salidas'], 0),
-        'ausentes':        max(total - resumen['total_entradas'], 0),
-        'con_salida':      resumen['total_salidas'],
+        'con_entrada': resumen['total_entradas'],
+        'presentes': max(resumen['total_entradas'] - resumen['total_salidas'], 0),
+        'ausentes': max(total - resumen['total_entradas'], 0),
+        'con_salida': resumen['total_salidas'],
         'total_tardanzas': resumen['total_tardanzas'],
-        'alertas_activas': alertas_activas,
+        'trabajadores_tardanza_semana': trabajadores_tardanza_semana,
         'ultimos_registros': ultimos,
     })
 
@@ -281,6 +315,7 @@ def marcaje(request):
     hoy      = timezone.localdate()
     ahora    = timezone.localtime().time()
     empleados = Empleado.objects.filter(activo=True).order_by('apellido', 'nombre')
+    autorizadores = _autorizadores_institucionales()
 
     if request.method == 'POST':
         try:
@@ -291,11 +326,18 @@ def marcaje(request):
 
         accion = request.POST.get('accion')
         motivo = request.POST.get('motivo', '').strip()
+        autorizado_por_id = request.POST.get('autorizado_por_id', '').strip() or None
 
         if accion == 'entrada':
             r = registrar_entrada(empleado, ahora, motivo=motivo, ip=_get_ip(request))
         elif accion == 'salida':
-            r = registrar_salida(empleado, ahora, motivo=motivo, ip=_get_ip(request))
+            r = registrar_salida(
+                empleado,
+                ahora,
+                motivo=motivo,
+                autorizado_por_id=int(autorizado_por_id) if autorizado_por_id else None,
+                ip=_get_ip(request),
+            )
         else:
             messages.error(request, 'Acción no válida.')
             return redirect('marcaje')
@@ -312,11 +354,12 @@ def marcaje(request):
     registros_hoy = (
         RegistroAsistencia.objects
         .filter(fecha=hoy)
-        .select_related('empleado')
+        .select_related('empleado', 'empleado__departamento', 'autorizado_por')
         .order_by('-hora_entrada')
     )
     return render(request, 'control/marcaje.html', {
         'empleados':     empleados,
+        'autorizadores': autorizadores,
         'hoy':           hoy,
         'ahora':         ahora,
         'registros_hoy': registros_hoy,
@@ -381,10 +424,71 @@ def editar_empleado(request, pk):
 
 @login_required
 def ver_empleado(request, pk):
-    empleado  = get_object_or_404(Empleado, pk=pk)
-    registros = RegistroAsistencia.objects.filter(empleado=empleado).order_by('-fecha')[:30]
+    empleado = get_object_or_404(
+        Empleado.objects.select_related('departamento'),
+        pk=pk,
+    )
+    registros = (
+        RegistroAsistencia.objects
+        .filter(empleado=empleado)
+        .select_related('autorizado_por')
+        .order_by('-fecha', '-hora_entrada', '-updated_at')[:30]
+    )
     return render(request, 'control/empleado_detalle.html', {
         'empleado': empleado, 'registros': registros
+    })
+
+
+@login_required
+@user_passes_test(es_admin, login_url='/')
+def historial_empleado(request, pk):
+    empleado = get_object_or_404(
+        Empleado.objects.select_related('departamento'),
+        pk=pk,
+    )
+    hoy = timezone.localdate()
+    semana_inicio = _inicio_semana(hoy)
+    semana_fin = _fin_semana(hoy)
+    mes_inicio = _inicio_mes(hoy)
+    registros = (
+        RegistroAsistencia.objects
+        .filter(empleado=empleado)
+        .select_related('autorizado_por')
+        .order_by('-fecha', '-hora_entrada', '-updated_at')
+    )
+    resumen = registros.aggregate(
+        tardanzas_semana=Count(
+            'id',
+            filter=Q(
+                tipo_novedad='tardanza',
+                fecha__gte=semana_inicio,
+                fecha__lte=semana_fin,
+            ),
+        ),
+        tardanzas_mes=Count(
+            'id',
+            filter=Q(
+                tipo_novedad='tardanza',
+                fecha__gte=mes_inicio,
+                fecha__lte=hoy,
+            ),
+        ),
+        salidas_anticipadas_mes=Count(
+            'id',
+            filter=Q(
+                tipo_novedad='salida_anticipada',
+                fecha__gte=mes_inicio,
+                fecha__lte=hoy,
+            ),
+        ),
+    )
+    return render(request, 'control/empleado_detalle.html', {
+        'empleado': empleado,
+        'registros': registros[:90],
+        'es_historial_disciplinario': True,
+        'tardanzas_semana': resumen['tardanzas_semana'],
+        'tardanzas_mes': resumen['tardanzas_mes'],
+        'salidas_anticipadas_mes': resumen['salidas_anticipadas_mes'],
     })
 
 
@@ -460,53 +564,119 @@ def exportar_csv(request):
 @login_required
 @user_passes_test(es_admin, login_url='/')
 def alertas_tardanza(request):
-    refresh_all_tardanza_alerts()
+    hoy = timezone.localdate()
+    semana_inicio = _inicio_semana(hoy)
+    semana_fin = _fin_semana(hoy)
+    mes_inicio = _inicio_mes(hoy)
+    tardanzas_empleado = (
+        RegistroAsistencia.objects
+        .filter(
+            empleado=OuterRef('pk'),
+            tipo_novedad='tardanza',
+        )
+        .order_by('-fecha', '-hora_entrada', '-updated_at')
+    )
     alertas = (
-        AlertaTardanza.objects
-        .select_related('empleado', 'empleado__departamento')
-        .order_by('resuelta', '-cantidad_tardanzas', '-semana', 'empleado__apellido', 'empleado__nombre')
+        Empleado.objects
+        .filter(activo=True)
+        .select_related('departamento')
+        .annotate(
+            tardanzas_semana=Count(
+                'registroasistencia',
+                filter=Q(
+                    registroasistencia__tipo_novedad='tardanza',
+                    registroasistencia__fecha__gte=semana_inicio,
+                    registroasistencia__fecha__lte=semana_fin,
+                ),
+            ),
+            tardanzas_mes=Count(
+                'registroasistencia',
+                filter=Q(
+                    registroasistencia__tipo_novedad='tardanza',
+                    registroasistencia__fecha__gte=mes_inicio,
+                    registroasistencia__fecha__lte=hoy,
+                ),
+            ),
+            ultima_tardanza=Subquery(tardanzas_empleado.values('fecha')[:1]),
+            ultimo_motivo=Subquery(tardanzas_empleado.values('motivo')[:1]),
+        )
+        .filter(Q(tardanzas_semana__gt=0) | Q(tardanzas_mes__gt=0))
+        .order_by('-tardanzas_semana', '-tardanzas_mes', '-ultima_tardanza', 'apellido', 'nombre')
     )
     return render(request, 'control/alertas_lista.html', {
         'alertas': alertas,
+        'semana_inicio': semana_inicio,
+        'semana_fin': semana_fin,
     })
 
 
 @login_required
 @user_passes_test(es_admin, login_url='/')
 def alerta_tardanza_detalle(request, pk):
-    alerta = get_object_or_404(
-        AlertaTardanza.objects.select_related('empleado', 'empleado__departamento'),
+    empleado = get_object_or_404(
+        Empleado.objects.select_related('departamento'),
         pk=pk,
     )
-    sync_tardanza_alert_for_employee_week(alerta.empleado, alerta.semana)
-    alerta.refresh_from_db()
-
-    if request.method == 'POST':
-        alerta.resuelta = True
-        alerta.save(update_fields=['resuelta', 'updated_at'])
-        messages.success(request, 'Alerta marcada como resuelta.')
-        return redirect('alerta_tardanza_detalle', pk=alerta.pk)
-
-    registros = registros_tardanza_de_alerta(alerta)
+    hoy = timezone.localdate()
+    semana_inicio = _inicio_semana(hoy)
+    semana_fin = _fin_semana(hoy)
+    mes_inicio = _inicio_mes(hoy)
+    registros = (
+        RegistroAsistencia.objects
+        .filter(
+            empleado=empleado,
+            tipo_novedad='tardanza',
+        )
+        .select_related('autorizado_por')
+        .order_by('-fecha', '-hora_entrada', '-updated_at')
+    )
+    resumen = registros.aggregate(
+        tardanzas_semana=Count(
+            'id',
+            filter=Q(fecha__gte=semana_inicio, fecha__lte=semana_fin),
+        ),
+        tardanzas_mes=Count(
+            'id',
+            filter=Q(fecha__gte=mes_inicio, fecha__lte=hoy),
+        ),
+    )
     return render(request, 'control/alerta_detalle.html', {
-        'alerta': alerta,
+        'empleado': empleado,
         'registros': registros,
-        'semana_fin': fin_semana(alerta.semana),
+        'tardanzas_semana': resumen['tardanzas_semana'],
+        'tardanzas_mes': resumen['tardanzas_mes'],
     })
 
 
 @login_required
 @user_passes_test(es_admin, login_url='/')
 def alerta_tardanza_exportar(request, pk):
-    alerta = get_object_or_404(
-        AlertaTardanza.objects.select_related('empleado', 'empleado__departamento'),
+    empleado = get_object_or_404(
+        Empleado.objects.select_related('departamento'),
         pk=pk,
     )
-    registros = registros_tardanza_de_alerta(alerta)
-    nombre_archivo = f'tardanzas_{alerta.empleado.cedula or alerta.empleado.pk}_{alerta.semana}.csv'
+    registros = (
+        RegistroAsistencia.objects
+        .filter(
+            empleado=empleado,
+            tipo_novedad='tardanza',
+        )
+        .select_related('autorizado_por')
+        .order_by('-fecha', '-hora_entrada', '-updated_at')
+    )
+    nombre_archivo = f'historial_disciplinario_{empleado.cedula or empleado.pk}.csv'
     response = HttpResponse(content_type='text/csv; charset=utf-8')
     response['Content-Disposition'] = f'attachment; filename="{nombre_archivo}"'
-    response.write(generar_csv_tardanzas(alerta, registros))
+    writer = csv.writer(response)
+    writer.writerow(['Fecha', 'Hora entrada', 'Minutos tarde', 'Motivo', 'Autorizado por'])
+    for registro in registros:
+        writer.writerow([
+            registro.fecha.strftime('%Y-%m-%d'),
+            registro.hora_entrada.strftime('%H:%M') if registro.hora_entrada else '',
+            registro.minutos_tardanza(),
+            registro.motivo or '',
+            str(registro.autorizado_por) if registro.autorizado_por else '',
+        ])
     return response
 
 

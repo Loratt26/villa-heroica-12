@@ -2,16 +2,21 @@
 {% block title %}{{ empleado }}{% endblock %}
 {% block content %}
 
-<div class="page-header d-flex justify-content-between align-items-start">
+<div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-2">
     <div>
         <h1><i class="bi bi-person me-2" style="color:#2c4a6e;"></i>{{ empleado }}</h1>
-        <p>{{ empleado.cargo }} — {{ empleado.departamento }}</p>
+        <p>{{ empleado.cargo }} - {{ empleado.departamento }}</p>
     </div>
-    <div class="d-flex gap-2">
+    <div class="d-flex gap-2 flex-wrap">
+        {% if es_historial_disciplinario %}
+        <a href="{% url 'alertas_tardanza' %}" class="btn btn-outline-strong btn-sm" data-loading-link data-loading-text="Volviendo...">
+            <i class="bi bi-arrow-left me-1"></i>Volver a alertas
+        </a>
+        {% endif %}
         <a href="{% url 'editar_empleado' empleado.pk %}" class="btn btn-outline-primary btn-sm">
             <i class="bi bi-pencil me-1"></i>Editar
         </a>
-        <a href="{% url 'lista_empleados' %}" class="btn btn-outline-secondary btn-sm">← Volver</a>
+        <a href="{% url 'lista_empleados' %}" class="btn btn-outline-secondary btn-sm">Volver</a>
     </div>
 </div>
 
@@ -19,69 +24,86 @@
     <div class="col-lg-4">
         <div class="card-form text-center mb-3">
             {% if empleado.foto %}
-            <img src="{{ empleado.foto.url }}" alt="{{ empleado }}"
-                 style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid #e2e8f0;margin-bottom:1rem;">
+            <img src="{{ empleado.foto.url }}" alt="{{ empleado }}" style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid #e2e8f0;margin-bottom:1rem;">
             {% else %}
-            <div style="width:100px;height:100px;border-radius:50%;background:#e8f0fe;
-                        display:flex;align-items:center;justify-content:center;
-                        font-size:2rem;font-weight:700;color:#1a2e4a;margin:0 auto 1rem;">
+            <div style="width:100px;height:100px;border-radius:50%;background:#e8f0fe;display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:700;color:#1a2e4a;margin:0 auto 1rem;">
                 {{ empleado.nombre.0 }}{{ empleado.apellido.0 }}
             </div>
             {% endif %}
             <div style="font-weight:700;font-size:1.1rem;color:#1a2e4a;">{{ empleado }}</div>
             <div style="font-size:.85rem;color:#718096;">{{ empleado.cargo }}</div>
         </div>
+
         <div class="card-form">
             <h6 class="fw-bold mb-3" style="color:#1a2e4a;">Datos</h6>
             <table class="table table-sm" style="font-size:.88rem;">
-                <tr><td class="text-muted">Cédula</td>
-                    <td><code>{{ empleado.cedula|default:"No asignada" }}</code></td></tr>
+                <tr><td class="text-muted">Cedula</td><td><code>{{ empleado.cedula|default:"No asignada" }}</code></td></tr>
                 <tr><td class="text-muted">Departamento</td><td>{{ empleado.departamento }}</td></tr>
-                <tr><td class="text-muted">Estado</td>
-                    <td>{% if empleado.activo %}<span class="badge-presente">Activo</span>
-                        {% else %}<span class="badge-ausente">Inactivo</span>{% endif %}</td></tr>
+                <tr><td class="text-muted">Estado</td><td>{% if empleado.activo %}<span class="badge-presente">Activo</span>{% else %}<span class="badge-ausente">Inactivo</span>{% endif %}</td></tr>
                 {% if empleado.hora_entrada %}
-                <tr><td class="text-muted">Entrada esp.</td>
-                    <td>{{ empleado.hora_entrada|time:"H:i" }}</td></tr>
-                <tr><td class="text-muted">Salida esp.</td>
-                    <td>{{ empleado.hora_salida|time:"H:i"|default:"—" }}</td></tr>
+                <tr><td class="text-muted">Entrada esp.</td><td>{{ empleado.hora_entrada|time:"H:i" }}</td></tr>
+                <tr><td class="text-muted">Salida esp.</td><td>{{ empleado.hora_salida|time:"H:i"|default:"-" }}</td></tr>
                 {% endif %}
             </table>
         </div>
+
+        {% if es_historial_disciplinario %}
+        <div class="card-form mt-3">
+            <h6 class="fw-bold mb-3" style="color:#1a2e4a;">Seguimiento disciplinario</h6>
+            <table class="table table-sm" style="font-size:.88rem;">
+                <tr><td class="text-muted">Tardanzas esta semana</td><td><span class="badge-tardanza">{{ tardanzas_semana }}</span></td></tr>
+                <tr><td class="text-muted">Tardanzas este mes</td><td><span class="badge-tardanza">{{ tardanzas_mes }}</span></td></tr>
+                <tr><td class="text-muted">Salidas anticipadas este mes</td><td><span class="badge-salida">{{ salidas_anticipadas_mes }}</span></td></tr>
+            </table>
+        </div>
+        {% endif %}
     </div>
 
     <div class="col-lg-8">
         <div class="tabla-asistencia">
             <div class="px-3 py-2" style="border-bottom:1px solid #e2e8f0;">
                 <span class="fw-bold" style="font-size:.9rem;color:#1a2e4a;">
-                    Últimos 30 Registros
+                    {% if es_historial_disciplinario %}Historial disciplinario{% else %}Ultimos 30 registros{% endif %}
                 </span>
             </div>
             <table class="table table-hover">
                 <thead>
-                    <tr><th>Fecha</th><th>Entrada</th><th>Salida</th><th>Horas</th><th>Novedad</th><th>Motivo</th></tr>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Entrada</th>
+                        <th>Salida</th>
+                        <th>Horas</th>
+                        <th>Novedad</th>
+                        <th>Motivo</th>
+                        <th>Autorizado por</th>
+                    </tr>
                 </thead>
                 <tbody>
                     {% for r in registros %}
                     <tr>
                         <td>{{ r.fecha|date:"d/m/Y" }}</td>
                         <td>
-                            {% if r.hora_entrada %}<strong>{{ r.hora_entrada|time:"H:i" }}</strong>{% else %}—{% endif %}
+                            {% if r.hora_entrada %}<strong>{{ r.hora_entrada|time:"H:i" }}</strong>{% else %}-{% endif %}
                             {% if r.minutos_tardanza > 0 %}
-                            <span style="font-size:.72rem;color:#856404;"> +{{ r.minutos_tardanza }}m</span>
+                            <span style="font-size:.72rem;color:#9f2d2d;">+{{ r.minutos_tardanza }}m</span>
                             {% endif %}
                         </td>
-                        <td>{% if r.hora_salida %}<strong>{{ r.hora_salida|time:"H:i" }}</strong>{% else %}—{% endif %}</td>
+                        <td>{% if r.hora_salida %}<strong>{{ r.hora_salida|time:"H:i" }}</strong>{% else %}-{% endif %}</td>
                         <td style="font-weight:600;color:#1a2e4a;">{{ r.horas_trabajadas }}</td>
                         <td>
-                            {% if r.tipo_novedad == 'tardanza' %}<span class="badge-tardanza">Tardanza</span>
-                            {% elif r.tipo_novedad == 'salida_anticipada' %}<span class="badge-salida">Salida ant.</span>
-                            {% else %}<span class="badge-presente">Normal</span>{% endif %}
+                            {% if r.tipo_novedad == 'tardanza' %}
+                            <span class="badge-tardanza">Tardanza</span>
+                            {% elif r.tipo_novedad == 'salida_anticipada' %}
+                            <span class="badge-salida">Salida anticipada</span>
+                            {% else %}
+                            <span class="badge-presente">Normal</span>
+                            {% endif %}
                         </td>
-                        <td style="font-size:.82rem;color:#516277;">{{ r.motivo|default:"—" }}</td>
+                        <td style="font-size:.82rem;color:#516277;">{{ r.motivo|default:"-" }}</td>
+                        <td style="font-size:.82rem;color:#516277;">{% if r.autorizado_por %}{{ r.autorizado_por }}{% else %}-{% endif %}</td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="6" class="text-center text-muted py-4">Sin registros.</td></tr>
+                    <tr><td colspan="7" class="text-center text-muted py-4">Sin registros.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>

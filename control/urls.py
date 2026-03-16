@@ -20,6 +20,7 @@ urlpatterns = [
     path('empleados/',                 views.lista_empleados, name='lista_empleados'),
     path('empleados/nuevo/',           views.crear_empleado,  name='crear_empleado'),
     path('empleados/<int:pk>/editar/', views.editar_empleado, name='editar_empleado'),
+    path('empleado/<int:pk>/historial/', views.historial_empleado, name='historial_empleado'),
     path('empleados/<int:pk>/',        views.ver_empleado,    name='ver_empleado'),
 
     # ── Reportes ───────────────────────────────────────────────────

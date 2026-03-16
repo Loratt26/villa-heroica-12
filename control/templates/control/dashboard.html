@@ -94,7 +94,7 @@
                 </a>
                 {% if request.user.is_staff or request.user.is_superuser %}
                 <a href="{% url 'alertas_tardanza' %}" class="btn btn-outline-strong py-3" style="min-height:74px;" data-loading-link data-loading-text="Abriendo alertas...">
-                    <i class="bi bi-exclamation-diamond me-2"></i>Alertas activas: {{ alertas_activas }}
+                    <i class="bi bi-exclamation-diamond me-2"></i>Alertas disciplinarias
                 </a>
                 {% endif %}
             </div>
@@ -109,6 +109,10 @@
                     <span class="text-muted">Tardanzas hoy</span>
                     <strong>{{ total_tardanzas }}</strong>
                 </div>
+                <div class="d-flex justify-content-between">
+                    <span class="text-muted">Trabajadores con tardanzas esta semana</span>
+                    <strong>{{ trabajadores_tardanza_semana }}</strong>
+                </div>
             </div>
         </div>
     </div>
@@ -117,8 +121,8 @@
         <div class="tabla-asistencia">
             <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 px-4 py-3" style="border-bottom:1px solid rgba(16,35,63,.08);">
                 <div>
-                    <div class="fw-bold" style="color:#10233f;">Ultimos registros de hoy</div>
-                    <div class="text-muted" style="font-size:.84rem;">Registros del dia.</div>
+                    <div class="fw-bold" style="color:#10233f;">Registros de hoy</div>
+                    <div class="text-muted" style="font-size:.84rem;">Cada empleado redirige a su historial disciplinario.</div>
                 </div>
                 <a href="{% url 'admin_lista_registros' %}" class="btn btn-outline-strong btn-sm" data-loading-link data-loading-text="Abriendo historial...">
                     <i class="bi bi-clock-history me-1"></i>Historial de Asistencia
@@ -131,13 +135,25 @@
                         <th>Entrada</th>
                         <th>Salida</th>
                         <th>Estado</th>
+                        <th>Motivo</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for r in ultimos_registros %}
-                    <tr>
+                    <tr
+                        {% if request.user.is_staff or request.user.is_superuser %}
+                        class="row-clickable"
+                        data-href="{% url 'historial_empleado' r.empleado.pk %}"
+                        {% endif %}
+                    >
                         <td>
+                            {% if request.user.is_staff or request.user.is_superuser %}
+                            <a href="{% url 'historial_empleado' r.empleado.pk %}" class="text-decoration-none" style="color:inherit;">
+                                <div style="font-weight:800;">{{ r.empleado.nombre_completo }}</div>
+                            </a>
+                            {% else %}
                             <div style="font-weight:800;">{{ r.empleado.nombre_completo }}</div>
+                            {% endif %}
                             <div class="text-muted" style="font-size:.8rem;">{{ r.empleado.cargo }}</div>
                         </td>
                         <td>{% if r.hora_entrada %}<strong>{{ r.hora_entrada|time:"H:i" }}</strong>{% else %}-{% endif %}</td>
@@ -155,10 +171,20 @@
                                 <span class="badge-ausente">Pendiente</span>
                             {% endif %}
                         </td>
+                        <td style="max-width:260px;">
+                            {% if r.motivo %}
+                            <div style="font-size:.84rem;color:#516277;">{{ r.motivo }}</div>
+                            {% if r.autorizado_por %}
+                            <div class="text-muted" style="font-size:.74rem;">Autorizado por: {{ r.autorizado_por }}</div>
+                            {% endif %}
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="4" class="text-center py-5 text-muted">
+                        <td colspan="5" class="text-center py-5 text-muted">
                             <i class="bi bi-inbox" style="font-size:2rem;display:block;margin-bottom:.5rem;"></i>
                             No hay registros cargados hoy.
                         </td>
@@ -169,4 +195,17 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('tr[data-href]').forEach((row) => {
+    row.addEventListener('click', (event) => {
+        if (event.target.closest('a, button')) {
+            return;
+        }
+        window.location.href = row.dataset.href;
+    });
+});
+</script>
 {% endblock %}
