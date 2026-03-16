@@ -1,8 +1,15 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
+from django.contrib.auth.models import User
 from .models import (
     Departamento, Sede, Feriado, Empleado,
     RegistroAsistencia, AuditLog, KioscoToken,
 )
+
+try:
+    admin.site.unregister(User)
+except admin.sites.NotRegistered:
+    pass
 
 
 @admin.register(Departamento)
@@ -62,3 +69,10 @@ class AuditLogAdmin(admin.ModelAdmin):
 class KioscoTokenAdmin(admin.ModelAdmin):
     list_display = ('empleado', 'accion', 'usado', 'creado_at', 'expira_at')
     readonly_fields = ('token', 'creado_at')
+
+
+@admin.register(User)
+class UserAdmin(DjangoUserAdmin):
+    list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff', 'is_superuser', 'is_active')
+    search_fields = ('username', 'email', 'first_name', 'last_name')
+    ordering = ('username',)

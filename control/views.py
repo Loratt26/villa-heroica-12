@@ -409,9 +409,18 @@ def reportes(request):
 
 @login_required
 def exportar_csv(request):
-    form = ReporteForm(request.GET or None)
+    data = request.GET.copy()
+    hoy = timezone.localdate().isoformat()
+    if not data.get('fecha_inicio'):
+        data['fecha_inicio'] = hoy
+    if not data.get('fecha_fin'):
+        data['fecha_fin'] = hoy
+    if not data.get('tipo_reporte'):
+        data['tipo_reporte'] = 'asistencias'
+
+    form = ReporteForm(data)
     if not form.is_valid():
-        messages.error(request, 'Filtros inválidos para exportar.')
+        messages.error(request, 'No se pudo exportar con los filtros actuales.')
         return redirect('reportes')
 
     emp_id = form.cleaned_data.get('empleado')

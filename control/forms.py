@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
+from django.utils import timezone
 from .models import Empleado
 from .validators import validar_cedula
 
@@ -12,10 +13,8 @@ class EmpleadoForm(forms.ModelForm):
             self.fields[field_name].widget = forms.TimeInput(
                 format='%H:%M',
                 attrs={
-                    'class': 'form-control',
-                    'type': 'time',
-                    'step': '300',
-                    'inputmode': 'numeric',
+                    'class': 'js-time-storage',
+                    'type': 'hidden',
                 },
             )
 
@@ -79,10 +78,29 @@ class ReporteForm(forms.Form):
         initial='asistencias',
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        hoy = timezone.localdate()
+        if not self.is_bound:
+            self.fields['fecha_inicio'].initial = hoy
+            self.fields['fecha_fin'].initial = hoy
+
     def clean(self):
         cleaned = super().clean()
         fi = cleaned.get('fecha_inicio')
         ff = cleaned.get('fecha_fin')
+        hoy = timezone.localdate()
+
+        if not fi and not ff:
+            fi = ff = hoy
+        elif fi and not ff:
+            ff = fi
+        elif ff and not fi:
+            fi = ff
+
+        cleaned['fecha_inicio'] = fi
+        cleaned['fecha_fin'] = ff
+
         if fi and ff and ff < fi:
             self.add_error('fecha_fin', 'La fecha hasta debe ser posterior a la fecha desde.')
         return cleaned

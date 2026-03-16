@@ -20,6 +20,8 @@ def validar_cedula(value: str) -> str:
         return value
 
     clean = value.strip().upper().replace('-', '').replace(' ', '')
+    if re.match(r'^\d{6,8}$', clean):
+        clean = f'V{clean}'
 
     if not re.match(r'^[VE]\d{6,8}$', clean):
         raise ValidationError(
@@ -34,6 +36,8 @@ def cedula_es_valida(raw: str) -> bool:
     if not raw:
         return False
     clean = raw.strip().upper().replace('-', '').replace(' ', '')
+    if re.match(r'^\d{6,8}$', clean):
+        clean = f'V{clean}'
     return bool(re.match(r'^[VE]\d{6,8}$', clean))
 
 
@@ -45,6 +49,8 @@ def normalizar_cedula(raw: str) -> str:
     if not raw:
         return ''
     clean = raw.strip().upper().replace('-', '').replace(' ', '')
+    if re.match(r'^\d{6,8}$', clean):
+        clean = f'V{clean}'
     if re.match(r'^[VE]\d{6,8}$', clean):
         return f'{clean[0]}-{clean[1:]}'
     return raw.strip().upper()

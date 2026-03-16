@@ -1,6 +1,66 @@
 {% extends 'control/base.html' %}
+{% load static %}
 {% block title %}{{ accion }} Empleado{% endblock %}
 {% block content %}
+<style>
+    .cedula-shell {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        border: 1px solid rgba(16, 35, 63, 0.12);
+        border-radius: 16px;
+        overflow: hidden;
+        background: #fff;
+    }
+
+    .cedula-prefix {
+        min-height: 58px;
+        padding: 0 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(16, 35, 63, 0.06);
+        color: #10233f;
+        font-weight: 800;
+        border-right: 1px solid rgba(16, 35, 63, 0.12);
+    }
+
+    .cedula-shell input {
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .time-picker-shell {
+        border: 1px solid rgba(16, 35, 63, 0.12);
+        border-radius: 18px;
+        background: #fff;
+        padding: 1rem;
+    }
+
+    .time-picker-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.75rem;
+    }
+
+    .time-picker-grid select {
+        min-height: 58px;
+        border-radius: 14px;
+    }
+
+    .time-preview {
+        margin-top: 0.75rem;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #526277;
+    }
+
+    @media (max-width: 575px) {
+        .time-picker-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
 
 <div class="page-header">
     <h1>
@@ -11,7 +71,7 @@
         {% if accion == 'Editar' %}
             Ajuste la informacion operativa de {{ empleado }}.
         {% else %}
-            Registre rapidamente un nuevo colaborador para el control de asistencia.
+            Registre un nuevo colaborador para el control de asistencia.
         {% endif %}
     </p>
 </div>
@@ -19,7 +79,7 @@
 <div class="row justify-content-center">
     <div class="col-xl-8">
         <div class="card-form">
-            <form method="post" enctype="multipart/form-data">
+            <form method="post" enctype="multipart/form-data" id="empleado-form">
                 {% csrf_token %}
                 <div class="row g-4">
                     <div class="col-12">
@@ -45,9 +105,22 @@
 
                     <div class="col-md-6">
                         <label class="form-label fw-bold">Cedula</label>
-                        {{ form.cedula }}
+                        {{ form.cedula.as_hidden }}
+                        <div class="cedula-shell">
+                            <div class="cedula-prefix">V-</div>
+                            <input
+                                id="cedula-digits"
+                                type="tel"
+                                inputmode="numeric"
+                                autocomplete="off"
+                                class="form-control"
+                                maxlength="8"
+                                placeholder="27421625"
+                                value="{{ form.cedula.value|default_if_none:''|cut:'V-'|cut:'E-' }}"
+                            >
+                        </div>
                         {% if form.cedula.errors %}<div class="text-danger small mt-1">{{ form.cedula.errors }}</div>{% endif %}
-                        <div class="form-text">Use formato V-12345678 o E-12345678.</div>
+                        <div class="form-text">El prefijo V- se aplica automaticamente y no puede eliminarse.</div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-bold">Cargo</label>
@@ -88,15 +161,29 @@
 
                     <div class="col-md-6">
                         <label class="form-label fw-bold">Hora de Entrada Esperada</label>
-                        {{ form.hora_entrada }}
+                        <div class="time-picker-shell js-time-picker" data-input-id="id_hora_entrada">
+                            {{ form.hora_entrada }}
+                            <div class="time-picker-grid">
+                                <select class="form-select js-time-hour" aria-label="Hora de entrada"></select>
+                                <select class="form-select js-time-minute" aria-label="Minutos de entrada"></select>
+                                <select class="form-select js-time-meridiem" aria-label="Meridiem de entrada"></select>
+                            </div>
+                            <div class="time-preview js-time-preview">Sin seleccionar</div>
+                        </div>
                         {% if form.hora_entrada.errors %}<div class="text-danger small mt-1">{{ form.hora_entrada.errors }}</div>{% endif %}
-                        <div class="form-text">Use el selector nativo del navegador. La hora se mantiene hasta guardar.</div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-bold">Hora de Salida Esperada</label>
-                        {{ form.hora_salida }}
+                        <div class="time-picker-shell js-time-picker" data-input-id="id_hora_salida">
+                            {{ form.hora_salida }}
+                            <div class="time-picker-grid">
+                                <select class="form-select js-time-hour" aria-label="Hora de salida"></select>
+                                <select class="form-select js-time-minute" aria-label="Minutos de salida"></select>
+                                <select class="form-select js-time-meridiem" aria-label="Meridiem de salida"></select>
+                            </div>
+                            <div class="time-preview js-time-preview">Sin seleccionar</div>
+                        </div>
                         {% if form.hora_salida.errors %}<div class="text-danger small mt-1">{{ form.hora_salida.errors }}</div>{% endif %}
-                        <div class="form-text">La hora seleccionada no se reinicia al salir del campo.</div>
                     </div>
 
                     <div class="col-12">
@@ -123,4 +210,108 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function pad2(value) {
+        return String(value).padStart(2, '0');
+    }
+
+    const cedulaField = document.getElementById('id_cedula');
+    const cedulaDigits = document.getElementById('cedula-digits');
+
+    function syncCedula() {
+        const digits = cedulaDigits.value.replace(/\D/g, '').slice(0, 8);
+        cedulaDigits.value = digits;
+        cedulaField.value = digits ? `V-${digits}` : '';
+    }
+
+    cedulaDigits.addEventListener('input', syncCedula);
+    syncCedula();
+
+    function buildOptions(select, values, placeholder) {
+        select.innerHTML = '';
+        const empty = document.createElement('option');
+        empty.value = '';
+        empty.textContent = placeholder;
+        select.appendChild(empty);
+
+        values.forEach((value) => {
+            const option = document.createElement('option');
+            option.value = value;
+            option.textContent = value;
+            select.appendChild(option);
+        });
+    }
+
+    function parseStoredTime(value) {
+        if (!value) {
+            return null;
+        }
+
+        const parts = value.split(':');
+        if (parts.length < 2) {
+            return null;
+        }
+
+        let hour24 = Number(parts[0]);
+        const minute = pad2(Number(parts[1]));
+        const meridiem = hour24 >= 12 ? 'PM' : 'AM';
+        let hour12 = hour24 % 12;
+        if (hour12 === 0) {
+            hour12 = 12;
+        }
+
+        return {
+            hour: String(hour12),
+            minute: minute,
+            meridiem: meridiem,
+        };
+    }
+
+    document.querySelectorAll('.js-time-picker').forEach((picker) => {
+        const hiddenInput = document.getElementById(picker.dataset.inputId);
+        const hourSelect = picker.querySelector('.js-time-hour');
+        const minuteSelect = picker.querySelector('.js-time-minute');
+        const meridiemSelect = picker.querySelector('.js-time-meridiem');
+        const preview = picker.querySelector('.js-time-preview');
+
+        buildOptions(hourSelect, Array.from({ length: 12 }, (_, index) => String(index + 1)), 'Hora');
+        buildOptions(minuteSelect, Array.from({ length: 60 }, (_, index) => pad2(index)), 'Minuto');
+        buildOptions(meridiemSelect, ['AM', 'PM'], 'AM/PM');
+
+        const initial = parseStoredTime(hiddenInput.value);
+        if (initial) {
+            hourSelect.value = initial.hour;
+            minuteSelect.value = initial.minute;
+            meridiemSelect.value = initial.meridiem;
+        }
+
+        function syncTime() {
+            const hour = hourSelect.value;
+            const minute = minuteSelect.value;
+            const meridiem = meridiemSelect.value;
+
+            if (!hour || !minute || !meridiem) {
+                hiddenInput.value = '';
+                preview.textContent = 'Sin seleccionar';
+                return;
+            }
+
+            let hour24 = Number(hour) % 12;
+            if (meridiem === 'PM') {
+                hour24 += 12;
+            }
+
+            hiddenInput.value = `${pad2(hour24)}:${minute}`;
+            preview.textContent = `${hour}:${minute} ${meridiem}`;
+        }
+
+        hourSelect.addEventListener('change', syncTime);
+        minuteSelect.addEventListener('change', syncTime);
+        meridiemSelect.addEventListener('change', syncTime);
+        syncTime();
+    });
+</script>
 {% endblock %}
