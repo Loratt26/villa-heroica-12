@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Django
+db.sqlite3
+/tmp/
+
+# Media uploads (no versionar fotos de empleados)
+media/
+
+# Logs (mantener directorio, ignorar contenido)
+logs/*.log
+
+# Entornos virtuales
+venv/
+env/
+.venv/
+.env
+
+# IDEs
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,75 @@
+{% extends 'control/base.html' %}
+{% block title %}Registros — {{ fecha|date:"d/m/Y" }}{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-start">
+    <div>
+        <h1><i class="bi bi-table me-2" style="color:#2c4a6e;"></i>Registros del Día</h1>
+        <p>Gestión de registros de asistencia — solo administradores</p>
+    </div>
+    <a href="{% url 'admin_audit_log' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-journal-text me-1"></i>Ver Auditoría
+    </a>
+</div>
+
+<div class="card-form mb-3">
+    <form method="get" class="d-flex gap-2 align-items-end">
+        <div>
+            <label class="form-label fw-semibold" style="font-size:.82rem;">Fecha</label>
+            <input type="date" name="fecha" class="form-control form-control-sm"
+                   value="{{ fecha|date:'Y-m-d' }}">
+        </div>
+        <button type="submit" class="btn btn-sm" style="background:#1a2e4a;color:#fff;">
+            <i class="bi bi-search"></i> Ver
+        </button>
+    </form>
+</div>
+
+<div class="tabla-asistencia">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Empleado</th><th>Entrada</th><th>Salida</th>
+                <th>Horas</th><th>Novedad</th><th>Estado</th><th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in registros %}
+            <tr>
+                <td>
+                    <div style="font-weight:600;font-size:.87rem;">{{ r.empleado }}</div>
+                    <div style="font-size:.75rem;color:#718096;">{{ r.empleado.departamento }}</div>
+                </td>
+                <td>{% if r.hora_entrada %}<strong>{{ r.hora_entrada|time:"H:i" }}</strong>{% else %}<span class="text-muted">—</span>{% endif %}</td>
+                <td>{% if r.hora_salida %}<strong>{{ r.hora_salida|time:"H:i" }}</strong>{% else %}<span class="text-muted">—</span>{% endif %}</td>
+                <td style="font-weight:600;color:#1a2e4a;">{{ r.horas_trabajadas }}</td>
+                <td>
+                    {% if r.tipo_novedad == 'tardanza' %}<span class="badge-tardanza">Tardanza</span>
+                    {% elif r.tipo_novedad == 'salida_anticipada' %}<span class="badge-salida">Salida ant.</span>
+                    {% else %}<span class="badge-presente">Normal</span>{% endif %}
+                </td>
+                <td>
+                    <span style="font-size:.78rem;background:#f1f5f9;padding:.2em .6em;border-radius:6px;color:#475569;">
+                        {{ r.get_estado_display }}
+                    </span>
+                </td>
+                <td>
+                    <div class="d-flex gap-1">
+                        <a href="{% url 'admin_editar_registro' r.pk %}"
+                           class="btn btn-sm btn-outline-primary" title="Editar">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <a href="{% url 'admin_eliminar_registro' r.pk %}"
+                           class="btn btn-sm btn-outline-danger" title="Eliminar">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7" class="text-center text-muted py-4">Sin registros para esta fecha.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<div class="mt-2 text-muted" style="font-size:.8rem;">{{ registros.count }} registro(s)</div>
+{% endblock %}

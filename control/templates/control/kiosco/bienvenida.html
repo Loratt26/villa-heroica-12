@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bienvenido — Villa Heroica</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+  :root { --azul: #1a2e4a; --verde: #16a34a; --acento: #e8a020; }
+  body {
+    background: var(--verde); min-height: 100vh; margin: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+  }
+  {% if registro.tipo_novedad == 'tardanza' or registro.tipo_novedad == 'salida_anticipada' %}
+  body { background: #1e3a5f; }
+  {% endif %}
+  .card-b {
+    background: rgba(255,255,255,.12); border-radius: 24px;
+    padding: 2.8rem 2.2rem; width: 100%; max-width: 460px;
+    text-align: center; color: #fff;
+  }
+  .icono-ok { font-size: 5rem; margin-bottom: .8rem; }
+  .saludo   { font-size: 1.2rem; opacity: .85; margin-bottom: .3rem; }
+  .nombre   { font-size: 2.2rem; font-weight: 800; line-height: 1.15; }
+  .accion   { font-size: 1.1rem; margin-top: .7rem; opacity: .9; }
+  .hora     { font-size: 1.6rem; font-weight: 700; margin: .4rem 0; }
+  .msg-dia  { font-size: 1rem; opacity: .75; margin-top: .6rem; }
+  .barra-container {
+    background: rgba(255,255,255,.2); border-radius: 99px;
+    height: 6px; margin-top: 2rem; overflow: hidden;
+  }
+  .barra-progreso {
+    background: #fff; height: 100%; border-radius: 99px;
+    width: 100%;
+    transition: width linear;
+  }
+  .countdown { font-size: .82rem; opacity: .6; margin-top: .5rem; }
+</style>
+</head>
+<body>
+<div class="card-b">
+  <div class="icono-ok">
+    {% if registro.tipo_novedad == 'normal' %}✅
+    {% elif registro.tipo_novedad == 'tardanza' %}⏰
+    {% else %}🔔{% endif %}
+  </div>
+  <div class="saludo">{{ saludo }},</div>
+  <div class="nombre">{{ registro.empleado.nombre }}</div>
+  <div class="accion">{{ accion }} registrada</div>
+  <div class="hora">{{ hora_display }}</div>
+  <div class="msg-dia">{{ mensaje_dia }}</div>
+
+  <div class="barra-container">
+    <div class="barra-progreso" id="barra"></div>
+  </div>
+  <div class="countdown" id="countdown">Regresando en {{ segundos }}s...</div>
+</div>
+
+<script>
+const TOTAL = {{ segundos }} * 1000;
+const KIOSCO_URL = '{% url "kiosco" %}';
+const barra = document.getElementById('barra');
+const txt   = document.getElementById('countdown');
+const inicio = Date.now();
+
+// Deshabilitar interacción durante bienvenida
+document.addEventListener('keydown',  e => e.preventDefault());
+document.addEventListener('click',    e => e.preventDefault());
+document.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
+
+function actualizar() {
+  const elapsed = Date.now() - inicio;
+  const restante = Math.max(0, TOTAL - elapsed);
+  const pct = (restante / TOTAL) * 100;
+  barra.style.width = pct + '%';
+  const seg = Math.ceil(restante / 1000);
+  txt.textContent = `Regresando en ${seg}s...`;
+  if (restante <= 0) {
+    window.location.href = KIOSCO_URL;
+  } else {
+    requestAnimationFrame(actualizar);
+  }
+}
+// Iniciar transición CSS
+barra.style.transition = `width ${TOTAL}ms linear`;
+setTimeout(() => barra.style.width = '0%', 50);
+requestAnimationFrame(actualizar);
+</script>
+</body>
+</html>

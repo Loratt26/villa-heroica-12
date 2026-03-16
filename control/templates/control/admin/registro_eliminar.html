@@ -1,0 +1,36 @@
+{% extends 'control/base.html' %}
+{% block title %}Eliminar Registro{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-5">
+        <div class="card-form text-center">
+            <div style="font-size:3rem;">🗑️</div>
+            <h5 class="fw-bold mt-2" style="color:#dc2626;">¿Eliminar este registro?</h5>
+            <p class="text-muted mt-1">
+                <strong>{{ registro.empleado }}</strong> — {{ registro.fecha|date:"d/m/Y" }}<br>
+                Entrada: {{ registro.hora_entrada|time:"H:i"|default:"—" }} |
+                Salida: {{ registro.hora_salida|time:"H:i"|default:"—" }}
+            </p>
+            <div class="mb-3 p-2 rounded" style="background:#fff3cd;border:1px solid #ffc107;font-size:.83rem;">
+                Esta acción queda registrada en auditoría y no se puede deshacer.
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3 text-start">
+                    <label class="form-label fw-semibold" style="font-size:.85rem;">Motivo de eliminación</label>
+                    <textarea name="motivo" class="form-control" rows="2"
+                              placeholder="Describe el motivo..." style="resize:none;" required></textarea>
+                </div>
+                <div class="d-flex gap-2 justify-content-center">
+                    <button type="submit" class="btn btn-danger fw-semibold px-4">
+                        <i class="bi bi-trash me-1"></i>Eliminar
+                    </button>
+                    <a href="{% url 'admin_lista_registros' %}" class="btn btn-outline-secondary px-4">
+                        Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

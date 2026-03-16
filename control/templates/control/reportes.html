@@ -1,0 +1,152 @@
+{% extends 'control/base.html' %}
+{% block title %}Reportes de Asistencia{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h1><i class="bi bi-file-earmark-bar-graph me-2" style="color:#2c4a6e;"></i>Reportes de Asistencia</h1>
+    <p>Consulte y exporte registros del personal</p>
+</div>
+
+<!-- Filtros -->
+<div class="card-form mb-4">
+    <h6 class="fw-bold mb-3" style="color:#1a2e4a;">
+        <i class="bi bi-funnel me-2"></i>Filtros
+    </h6>
+    <form method="get" id="form-reporte" class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label fw-semibold" style="font-size:.85rem;">Empleado</label>
+            {{ form.empleado }}
+        </div>
+        <div class="col-md-2">
+            <label class="form-label fw-semibold" style="font-size:.85rem;">{{ form.fecha_inicio.label }}</label>
+            {{ form.fecha_inicio }}
+        </div>
+        <div class="col-md-2">
+            <label class="form-label fw-semibold" style="font-size:.85rem;">{{ form.fecha_fin.label }}</label>
+            {{ form.fecha_fin }}
+        </div>
+        <div class="col-md-2">
+            <label class="form-label fw-semibold" style="font-size:.85rem;">Tipo</label>
+            {{ form.tipo_reporte }}
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <button type="submit" class="btn fw-semibold flex-grow-1"
+                    style="background:#1a2e4a;color:#fff;border-radius:8px;">
+                <i class="bi bi-search me-1"></i>Filtrar
+            </button>
+            {% if request.GET %}
+            <a href="{% url 'reportes' %}" class="btn btn-outline-secondary" title="Limpiar">
+                <i class="bi bi-x"></i>
+            </a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+{% if request.GET %}
+<!-- Barra de resultados + exportar -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <span class="text-muted" style="font-size:.85rem;">
+        {% if ausencias %}
+            <strong>{{ ausencias|length }}</strong> inasistencia(s) encontrada(s)
+        {% else %}
+            <strong>{{ total }}</strong> registro(s) encontrado(s)
+        {% endif %}
+    </span>
+    {% if not ausencias %}
+    <a href="{% url 'exportar_csv' %}?{{ request.GET.urlencode }}"
+       class="btn btn-sm fw-semibold"
+       style="background:#16a34a;color:#fff;border-radius:8px;">
+        <i class="bi bi-file-earmark-excel me-1"></i>Exportar CSV
+    </a>
+    {% endif %}
+</div>
+
+<!-- Tabla asistencias -->
+{% if registros is not None %}
+<div class="tabla-asistencia">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Empleado</th>
+                <th>Departamento</th>
+                <th>Fecha</th>
+                <th>Entrada</th>
+                <th>Salida</th>
+                <th>Horas</th>
+                <th>Novedad</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in registros %}
+            <tr>
+                <td>
+                    <div style="font-weight:600;font-size:.87rem;">{{ r.empleado }}</div>
+                    <div style="font-size:.75rem;color:#718096;">{{ r.empleado.cedula|default:"" }}</div>
+                </td>
+                <td style="font-size:.85rem;">{{ r.empleado.departamento }}</td>
+                <td style="font-size:.85rem;">{{ r.fecha|date:"d/m/Y" }}</td>
+                <td>
+                    {% if r.hora_entrada %}
+                        <strong>{{ r.hora_entrada|time:"H:i" }}</strong>
+                        {% if r.horario_entrada_esperado and r.minutos_tardanza > 0 %}
+                        <div style="font-size:.72rem;color:#856404;">
+                            +{{ r.minutos_tardanza }}min tarde
+                        </div>
+                        {% endif %}
+                    {% else %}—{% endif %}
+                </td>
+                <td>{% if r.hora_salida %}<strong>{{ r.hora_salida|time:"H:i" }}</strong>{% else %}—{% endif %}</td>
+                <td><span style="font-weight:600;color:#1a2e4a;">{{ r.horas_trabajadas }}</span></td>
+                <td>
+                    {% if r.tipo_novedad == 'tardanza' %}
+                        <span class="badge-tardanza">Tardanza</span>
+                    {% elif r.tipo_novedad == 'salida_anticipada' %}
+                        <span class="badge-salida">Salida ant.</span>
+                    {% else %}
+                        <span class="badge-presente">Normal</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center text-muted py-5">
+                    <i class="bi bi-inbox" style="font-size:2rem;display:block;margin-bottom:.5rem;"></i>
+                    No hay registros para los filtros seleccionados.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Tabla inasistencias -->
+{% if ausencias %}
+<div class="tabla-asistencia">
+    <table class="table table-hover">
+        <thead>
+            <tr><th>Empleado</th><th>Departamento</th><th>Fecha</th><th>Día</th></tr>
+        </thead>
+        <tbody>
+            {% for a in ausencias %}
+            <tr>
+                <td style="font-weight:600;font-size:.87rem;">{{ a.empleado }}</td>
+                <td style="font-size:.85rem;">{{ a.empleado.departamento }}</td>
+                <td style="font-size:.85rem;">{{ a.fecha|date:"d/m/Y" }}</td>
+                <td style="font-size:.85rem;color:#718096;">{{ a.fecha|date:"l" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="text-center text-muted py-4">
+                    Sin inasistencias en el período. ✅
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% endif %}{# end if request.GET #}
+{% endblock %}

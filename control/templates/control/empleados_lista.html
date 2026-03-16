@@ -1,0 +1,139 @@
+{% extends 'control/base.html' %}
+{% block title %}Empleados{% endblock %}
+{% block content %}
+
+<div class="page-header d-flex justify-content-between align-items-start">
+    <div>
+        <h1><i class="bi bi-people me-2" style="color:#2c4a6e;"></i>Gestión de Empleados</h1>
+        <p>Administre el personal de la institución</p>
+    </div>
+    <a href="{% url 'crear_empleado' %}" class="btn fw-semibold"
+       style="background:#1a2e4a;color:#fff;border-radius:8px;">
+        <i class="bi bi-plus-lg me-1"></i>Nuevo Empleado
+    </a>
+</div>
+
+<!-- Filtros: búsqueda + departamento -->
+<div class="card-form mb-3">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-5">
+            <label class="form-label fw-semibold" style="font-size:.82rem;">Buscar</label>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" name="buscar" class="form-control"
+                       placeholder="Nombre, apellido o cédula..."
+                       value="{{ buscar }}">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-semibold" style="font-size:.82rem;">Departamento</label>
+            <select name="departamento" class="form-select form-select-sm">
+                <option value="">— Todos —</option>
+                {% for dept in departamentos %}
+                <option value="{{ dept.id }}"
+                    {% if dept_seleccionado == dept.id|stringformat:"i" %}selected{% endif %}>
+                    {{ dept.nombre }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-sm fw-semibold w-100"
+                    style="background:#1a2e4a;color:#fff;">
+                <i class="bi bi-search me-1"></i>Filtrar
+            </button>
+            {% if buscar or dept_seleccionado %}
+            <a href="{% url 'lista_empleados' %}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-x"></i>
+            </a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<div class="tabla-asistencia">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Nombre y Apellido</th>
+                <th>Cédula</th>
+                <th>Cargo</th>
+                <th>Departamento</th>
+                <th>Horario</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for emp in empleados %}
+            <tr>
+                <td style="color:#718096;font-size:.8rem;">{{ forloop.counter }}</td>
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        {% if emp.foto_url %}
+                        <img src="{{ emp.foto_url }}" alt=""
+                             style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;">
+                        {% else %}
+                        <div style="width:32px;height:32px;background:#e8f0fe;border-radius:50%;
+                                    display:flex;align-items:center;justify-content:center;
+                                    font-weight:700;color:#1a2e4a;font-size:.78rem;flex-shrink:0;">
+                            {{ emp.nombre.0 }}{{ emp.apellido.0 }}
+                        </div>
+                        {% endif %}
+                        <div>
+                            <div style="font-weight:600;font-size:.88rem;">{{ emp.nombre }} {{ emp.apellido }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td style="font-size:.85rem;font-family:monospace;">
+                    {{ emp.cedula|default:"—" }}
+                </td>
+                <td style="font-size:.85rem;">{{ emp.cargo }}</td>
+                <td>
+                    <span class="badge" style="background:#e8f0fe;color:#1a2e4a;font-weight:600;">
+                        {{ emp.departamento }}
+                    </span>
+                </td>
+                <td style="font-size:.8rem;color:#718096;">
+                    {% if emp.hora_entrada %}
+                        {{ emp.hora_entrada|time:"H:i" }} –
+                        {{ emp.hora_salida|time:"H:i"|default:"?" }}
+                    {% else %}—{% endif %}
+                </td>
+                <td>
+                    {% if emp.activo %}
+                        <span class="badge-presente">Activo</span>
+                    {% else %}
+                        <span class="badge-ausente">Inactivo</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="d-flex gap-1">
+                        <a href="{% url 'ver_empleado' emp.pk %}"
+                           class="btn btn-sm btn-outline-secondary" title="Ver detalle">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <a href="{% url 'editar_empleado' emp.pk %}"
+                           class="btn btn-sm btn-outline-primary" title="Editar">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" class="text-center text-muted py-5">
+                    <i class="bi bi-people" style="font-size:2rem;display:block;margin-bottom:.5rem;"></i>
+                    {% if buscar %}No hay empleados que coincidan con "{{ buscar }}".
+                    {% else %}No hay empleados registrados.{% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<div class="mt-2 text-muted" style="font-size:.8rem;">
+    Total: <strong>{{ empleados.count }}</strong> empleado(s)
+</div>
+{% endblock %}

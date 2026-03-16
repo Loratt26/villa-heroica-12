@@ -1,0 +1,24 @@
+[
+  {"model": "control.departamento", "pk": 1, "fields": {"nombre": "Dirección"}},
+  {"model": "control.departamento", "pk": 2, "fields": {"nombre": "Coordinación"}},
+  {"model": "control.departamento", "pk": 3, "fields": {"nombre": "Administración"}},
+  {"model": "control.departamento", "pk": 4, "fields": {"nombre": "Secretaría"}},
+  {"model": "control.departamento", "pk": 5, "fields": {"nombre": "Limpieza"}},
+  {"model": "control.departamento", "pk": 6, "fields": {"nombre": "Seguridad"}},
+
+  {"model": "control.empleado", "pk": 1,  "fields": {"nombre": "Carlos",   "apellido": "Mendoza",  "cargo": "Director",              "departamento": 1, "usuario": null, "activo": true}},
+  {"model": "control.empleado", "pk": 2,  "fields": {"nombre": "María",    "apellido": "González", "cargo": "Coordinadora Académica",  "departamento": 2, "usuario": null, "activo": true}},
+  {"model": "control.empleado", "pk": 3,  "fields": {"nombre": "Laura",    "apellido": "Rodríguez","cargo": "Coordinadora de Primaria","departamento": 2, "usuario": null, "activo": true}},
+  {"model": "control.empleado", "pk": 4,  "fields": {"nombre": "Ana",      "apellido": "Martínez", "cargo": "Coordinadora de Preescolar","departamento": 2, "usuario": null, "activo": true}},
+  {"model": "control.empleado", "pk": 5,  "fields": {"nombre": "Roberto",  "apellido": "Pérez",    "cargo": "Contador",               "departamento": 3, "usuario": null, "activo": true}},
+  {"model": "control.empleado", "pk": 6,  "fields": {"nombre": "Daniela",  "apellido": "Torres",   "cargo": "Personal Contable",       "departamento": 3, "usuario": null, "activo": true}},
+  {"model": "control.empleado", "pk": 7,  "fields": {"nombre": "Luisa",    "apellido": "Vargas",   "cargo": "Secretaria",             "departamento": 4, "usuario": null, "activo": true}},
+  {"model": "control.empleado", "pk": 8,  "fields": {"nombre": "Carmen",   "apellido": "Herrera",  "cargo": "Secretaria",             "departamento": 4, "usuario": null, "activo": true}},
+  {"model": "control.empleado", "pk": 9,  "fields": {"nombre": "José",     "apellido": "Ramos",    "cargo": "Personal de Limpieza",   "departamento": 5, "usuario": null, "activo": true}},
+  {"model": "control.empleado", "pk": 10, "fields": {"nombre": "Rosa",     "apellido": "Flores",   "cargo": "Personal de Limpieza",   "departamento": 5, "usuario": null, "activo": true}},
+  {"model": "control.empleado", "pk": 11, "fields": {"nombre": "Pedro",    "apellido": "Núñez",    "cargo": "Personal de Limpieza",   "departamento": 5, "usuario": null, "activo": true}},
+  {"model": "control.empleado", "pk": 12, "fields": {"nombre": "Elena",    "apellido": "Castro",   "cargo": "Personal de Limpieza",   "departamento": 5, "usuario": null, "activo": true}},
+  {"model": "control.empleado", "pk": 13, "fields": {"nombre": "Miguel",   "apellido": "Díaz",     "cargo": "Vigilante",              "departamento": 6, "usuario": null, "activo": true}},
+  {"model": "control.empleado", "pk": 14, "fields": {"nombre": "Antonio",  "apellido": "Morales",  "cargo": "Vigilante",              "departamento": 6, "usuario": null, "activo": true}},
+  {"model": "control.empleado", "pk": 15, "fields": {"nombre": "Luis",     "apellido": "Jiménez",  "cargo": "Vigilante",              "departamento": 6, "usuario": null, "activo": true}}
+]

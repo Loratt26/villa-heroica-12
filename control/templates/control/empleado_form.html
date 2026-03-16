@@ -1,0 +1,106 @@
+{% extends 'control/base.html' %}
+{% block title %}{{ accion }} Empleado{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h1>
+        <i class="bi bi-person-{% if accion == 'Crear' %}plus{% else %}pencil{% endif %} me-2"
+           style="color:#2c4a6e;"></i>{{ accion }} Empleado
+    </h1>
+    <p>{% if accion == 'Editar' %}Modifique los datos de {{ empleado }}
+       {% else %}Complete los datos del nuevo empleado{% endif %}</p>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="card-form">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="row g-3">
+                    <!-- Datos personales -->
+                    <div class="col-12">
+                        <h6 class="fw-bold mb-0" style="color:#1a2e4a;font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;">
+                            Datos Personales
+                        </h6>
+                        <hr class="mt-2 mb-3">
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label fw-semibold" style="font-size:.85rem;">Nombre</label>
+                        {{ form.nombre }}
+                        {% if form.nombre.errors %}<div class="text-danger" style="font-size:.8rem;">{{ form.nombre.errors }}</div>{% endif %}
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label fw-semibold" style="font-size:.85rem;">Apellido</label>
+                        {{ form.apellido }}
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label fw-semibold" style="font-size:.85rem;">Cédula</label>
+                        {{ form.cedula }}
+                        {% if form.cedula.errors %}<div class="text-danger" style="font-size:.8rem;">{{ form.cedula.errors }}</div>{% endif %}
+                        <div class="form-text">Formato: V-12345678 o E-12345678</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label fw-semibold" style="font-size:.85rem;">Cargo</label>
+                        {{ form.cargo }}
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label fw-semibold" style="font-size:.85rem;">Departamento</label>
+                        {{ form.departamento }}
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label fw-semibold" style="font-size:.85rem;">Foto</label>
+                        {{ form.foto }}
+                        {% if empleado and empleado.foto_url %}
+                        <div class="mt-2">
+                            <img src="{{ empleado.foto_url }}" alt="Foto actual"
+                                 style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid #e2e8f0;">
+                            <small class="text-muted ms-2">Foto actual</small>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Horario -->
+                    <div class="col-12 mt-2">
+                        <h6 class="fw-bold mb-0" style="color:#1a2e4a;font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;">
+                            Horario Laboral
+                        </h6>
+                        <hr class="mt-2 mb-3">
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label fw-semibold" style="font-size:.85rem;">Hora de Entrada Esperada</label>
+                        {{ form.hora_entrada }}
+                        <div class="form-text">Usado para detectar tardanzas</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label fw-semibold" style="font-size:.85rem;">Hora de Salida Esperada</label>
+                        {{ form.hora_salida }}
+                        <div class="form-text">Usado para detectar salidas anticipadas</div>
+                    </div>
+
+                    <!-- Estado -->
+                    <div class="col-12 mt-2">
+                        <div class="form-check">
+                            {{ form.activo }}
+                            <label class="form-check-label fw-semibold" style="font-size:.85rem;">
+                                Empleado activo
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn fw-semibold"
+                            style="background:#1a2e4a;color:#fff;border-radius:8px;padding:.6rem 1.5rem;">
+                        <i class="bi bi-check-lg me-1"></i>Guardar
+                    </button>
+                    <a href="{% url 'lista_empleados' %}" class="btn btn-outline-secondary"
+                       style="border-radius:8px;">
+                        <i class="bi bi-x me-1"></i>Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
