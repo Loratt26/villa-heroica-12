@@ -8,6 +8,7 @@ class ControlConfig(AppConfig):
     def ready(self):
         # Aplicar PRAGMAs WAL en SQLite via señal — la forma correcta
         from django.db.backends.signals import connection_created
+        from django.db.models.signals import post_migrate
 
         def activar_wal(sender, connection, **kwargs):
             if connection.vendor == 'sqlite':
@@ -18,4 +19,14 @@ class ControlConfig(AppConfig):
                 cursor.execute('PRAGMA temp_store=MEMORY;')
                 cursor.execute('PRAGMA foreign_keys=ON;')
 
-        connection_created.connect(activar_wal)
+        def asegurar_departamentos(**kwargs):
+            from .services.institutional_seed import ensure_departamentos
+            ensure_departamentos()
+
+        connection_created.connect(activar_wal, dispatch_uid='control.sqlite_wal')
+        post_migrate.connect(
+            asegurar_departamentos,
+            sender=self,
+            dispatch_uid='control.ensure_departamentos_post_migrate',
+        )
+        asegurar_departamentos()

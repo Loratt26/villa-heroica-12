@@ -8,6 +8,7 @@ from django.db.models import Count, Q
 from django.utils import timezone
 
 from ..models import Empleado, RegistroAsistencia, Feriado
+from .tardanzas import tardanza_q
 
 
 def _dias_habiles(fecha_inicio: date, fecha_fin: date) -> list[date]:
@@ -31,7 +32,7 @@ def resumen_diario(fecha: date, sede_id=None) -> dict:
     return qs.aggregate(
         total_entradas   = Count('id', filter=Q(hora_entrada__isnull=False)),
         total_salidas    = Count('id', filter=Q(hora_salida__isnull=False)),
-        total_tardanzas  = Count('id', filter=Q(tipo_novedad='tardanza')),
+        total_tardanzas  = Count('id', filter=tardanza_q()),
         total_salidas_ant = Count('id', filter=Q(tipo_novedad='salida_anticipada')),
     )
 

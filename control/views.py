@@ -25,11 +25,14 @@ from .services.asistencia import (evaluar_entrada, evaluar_salida,
 from .services.reportes import (generar_csv, inasistencias,
                                   registros_filtrados, resumen_diario)
 from .services.tardanzas import (
+    annotate_tardanza_flag,
     fin_semana,
     generar_csv_tardanzas,
     refresh_all_tardanza_alerts,
     registros_tardanza_de_alerta,
     sync_tardanza_alert_for_employee_week,
+    tardanza_q,
+    tardanza_queryset,
 )
 
 logger = logging.getLogger('control.asistencia')
@@ -99,19 +102,19 @@ def dashboard(request):
     semana_fin = _fin_semana(hoy)
     resumen = resumen_diario(hoy)
     total = Empleado.objects.filter(activo=True).count()
-    ultimos = (
+    ultimos = annotate_tardanza_flag(
         RegistroAsistencia.objects
         .filter(fecha=hoy)
         .select_related('empleado', 'empleado__departamento', 'autorizado_por')
-        .order_by('-updated_at', '-hora_entrada')[:12]
-    )
+        .order_by('-updated_at', '-hora_entrada')
+    )[:12]
     trabajadores_tardanza_semana = (
         RegistroAsistencia.objects
         .filter(
-            tipo_novedad='tardanza',
             fecha__gte=semana_inicio,
             fecha__lte=semana_fin,
         )
+        .filter(tardanza_q())
         .values('empleado_id')
         .distinct()
         .count()
@@ -427,12 +430,12 @@ def ver_empleado(request, pk):
         Empleado.objects.select_related('departamento'),
         pk=pk,
     )
-    registros = (
+    registros = annotate_tardanza_flag(
         RegistroAsistencia.objects
         .filter(empleado=empleado)
         .select_related('autorizado_por')
-        .order_by('-fecha', '-hora_entrada', '-updated_at')[:30]
-    )
+        .order_by('-fecha', '-hora_entrada', '-updated_at')
+    )[:30]
     return render(request, 'control/empleado_detalle.html', {
         'empleado': empleado, 'registros': registros
     })
@@ -449,7 +452,7 @@ def historial_empleado(request, pk):
     semana_inicio = _inicio_semana(hoy)
     semana_fin = _fin_semana(hoy)
     mes_inicio = _inicio_mes(hoy)
-    registros = (
+    registros = annotate_tardanza_flag(
         RegistroAsistencia.objects
         .filter(empleado=empleado)
         .select_related('autorizado_por')
@@ -459,7 +462,7 @@ def historial_empleado(request, pk):
         tardanzas_semana=Count(
             'id',
             filter=Q(
-                tipo_novedad='tardanza',
+                es_tardanza_alerta=1,
                 fecha__gte=semana_inicio,
                 fecha__lte=semana_fin,
             ),
@@ -467,7 +470,7 @@ def historial_empleado(request, pk):
         tardanzas_mes=Count(
             'id',
             filter=Q(
-                tipo_novedad='tardanza',
+                es_tardanza_alerta=1,
                 fecha__gte=mes_inicio,
                 fecha__lte=hoy,
             ),
@@ -568,10 +571,9 @@ def alertas_tardanza(request):
     semana_fin = _fin_semana(hoy)
     mes_inicio = _inicio_mes(hoy)
     tardanzas_empleado = (
-        RegistroAsistencia.objects
-        .filter(
-            empleado=OuterRef('pk'),
-            tipo_novedad='tardanza',
+        tardanza_queryset(
+            RegistroAsistencia.objects
+            .filter(empleado=OuterRef('pk'))
         )
         .order_by('-fecha', '-hora_entrada', '-updated_at')
     )
@@ -582,18 +584,22 @@ def alertas_tardanza(request):
         .annotate(
             tardanzas_semana=Count(
                 'registroasistencia',
-                filter=Q(
-                    registroasistencia__tipo_novedad='tardanza',
+                filter=(
+                    tardanza_q('registroasistencia__') &
+                    Q(
                     registroasistencia__fecha__gte=semana_inicio,
                     registroasistencia__fecha__lte=semana_fin,
+                    )
                 ),
             ),
             tardanzas_mes=Count(
                 'registroasistencia',
-                filter=Q(
-                    registroasistencia__tipo_novedad='tardanza',
+                filter=(
+                    tardanza_q('registroasistencia__') &
+                    Q(
                     registroasistencia__fecha__gte=mes_inicio,
                     registroasistencia__fecha__lte=hoy,
+                    )
                 ),
             ),
             ultima_tardanza=Subquery(tardanzas_empleado.values('fecha')[:1]),
@@ -602,6 +608,7 @@ def alertas_tardanza(request):
         .filter(Q(tardanzas_semana__gt=0) | Q(tardanzas_mes__gt=0))
         .order_by('-tardanzas_semana', '-tardanzas_mes', '-ultima_tardanza', 'apellido', 'nombre')
     )
+    print("Disciplinary alert aggregation OK")
     return render(request, 'control/alertas_lista.html', {
         'alertas': alertas,
         'semana_inicio': semana_inicio,
@@ -621,10 +628,9 @@ def alerta_tardanza_detalle(request, pk):
     semana_fin = _fin_semana(hoy)
     mes_inicio = _inicio_mes(hoy)
     registros = (
-        RegistroAsistencia.objects
-        .filter(
-            empleado=empleado,
-            tipo_novedad='tardanza',
+        tardanza_queryset(
+            RegistroAsistencia.objects
+            .filter(empleado=empleado)
         )
         .select_related('autorizado_por')
         .order_by('-fecha', '-hora_entrada', '-updated_at')
@@ -655,10 +661,9 @@ def alerta_tardanza_exportar(request, pk):
         pk=pk,
     )
     registros = (
-        RegistroAsistencia.objects
-        .filter(
-            empleado=empleado,
-            tipo_novedad='tardanza',
+        tardanza_queryset(
+            RegistroAsistencia.objects
+            .filter(empleado=empleado)
         )
         .select_related('autorizado_por')
         .order_by('-fecha', '-hora_entrada', '-updated_at')

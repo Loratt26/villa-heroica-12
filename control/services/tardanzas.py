@@ -3,6 +3,8 @@ from datetime import timedelta
 import csv
 import io
 
+from django.db.models import Case, F, IntegerField, Q, Value, When
+
 from ..models import AlertaTardanza, RegistroAsistencia, SystemSettings
 
 
@@ -23,13 +25,42 @@ def get_tardanza_limit():
     return get_system_settings().tardanzas_alerta_limite
 
 
+def tardanza_q(prefix=''):
+    return (
+        Q(**{f'{prefix}tipo_novedad': 'tardanza'}) |
+        (
+            Q(**{f'{prefix}hora_entrada__isnull': False}) &
+            Q(**{f'{prefix}horario_entrada_esperado__isnull': False}) &
+            Q(**{f'{prefix}hora_entrada__gt': F(f'{prefix}horario_entrada_esperado')})
+        )
+    )
+
+
+def tardanza_case(prefix=''):
+    return Case(
+        When(tardanza_q(prefix), then=Value(1)),
+        default=Value(0),
+        output_field=IntegerField(),
+    )
+
+
+def annotate_tardanza_flag(queryset, field_name='es_tardanza_alerta'):
+    return queryset.annotate(**{field_name: tardanza_case()})
+
+
+def tardanza_queryset(queryset=None):
+    base_queryset = queryset if queryset is not None else RegistroAsistencia.objects.all()
+    return annotate_tardanza_flag(base_queryset).filter(es_tardanza_alerta=1)
+
+
 def sync_tardanza_alert_for_employee_week(empleado, fecha):
     semana = inicio_semana(fecha)
     limite = get_tardanza_limit()
-    cantidad = RegistroAsistencia.objects.filter(
-        empleado=empleado,
-        tipo_novedad='tardanza',
-        fecha__range=[semana, semana + timedelta(days=6)],
+    cantidad = tardanza_queryset(
+        RegistroAsistencia.objects.filter(
+            empleado=empleado,
+            fecha__range=[semana, semana + timedelta(days=6)],
+        )
     ).count()
 
     alerta = AlertaTardanza.objects.filter(empleado=empleado, semana=semana).first()
@@ -60,8 +91,7 @@ def sync_tardanza_alert_for_employee_week(empleado, fecha):
 def refresh_all_tardanza_alerts():
     limite = get_tardanza_limit()
     tardanzas = (
-        RegistroAsistencia.objects
-        .filter(tipo_novedad='tardanza')
+        tardanza_queryset()
         .select_related('empleado')
         .only('empleado_id', 'fecha')
     )
@@ -108,16 +138,12 @@ def refresh_all_tardanza_alerts():
 
 
 def registros_tardanza_de_alerta(alerta):
-    return (
-        RegistroAsistencia.objects
-        .filter(
+    return tardanza_queryset(
+        RegistroAsistencia.objects.filter(
             empleado=alerta.empleado,
-            tipo_novedad='tardanza',
             fecha__range=[alerta.semana, alerta.semana + timedelta(days=6)],
         )
-        .select_related('empleado', 'empleado__departamento')
-        .order_by('-fecha', '-hora_entrada')
-    )
+    ).select_related('empleado', 'empleado__departamento', 'autorizado_por').order_by('-fecha', '-hora_entrada')
 
 
 def generar_csv_tardanzas(alerta, queryset) -> bytes:
@@ -134,6 +160,7 @@ def generar_csv_tardanzas(alerta, queryset) -> bytes:
         'Hora esperada',
         'Minutos tarde',
         'Motivo',
+        'Autorizado por',
     ])
 
     for registro in queryset.iterator(chunk_size=500):
@@ -147,6 +174,7 @@ def generar_csv_tardanzas(alerta, queryset) -> bytes:
             registro.horario_entrada_esperado.strftime('%H:%M') if registro.horario_entrada_esperado else '',
             registro.minutos_tardanza(),
             registro.motivo,
+            str(registro.autorizado_por) if registro.autorizado_por else '',
         ])
 
     return output.getvalue().encode('utf-8')

@@ -159,7 +159,7 @@
                         <td>{% if r.hora_entrada %}<strong>{{ r.hora_entrada|time:"H:i" }}</strong>{% else %}-{% endif %}</td>
                         <td>{% if r.hora_salida %}<strong>{{ r.hora_salida|time:"H:i" }}</strong>{% else %}-{% endif %}</td>
                         <td>
-                            {% if r.tipo_novedad == 'tardanza' %}
+                            {% if r.es_tardanza_alerta %}
                                 <span class="badge-tardanza">Tardanza</span>
                             {% elif r.tipo_novedad == 'salida_anticipada' %}
                                 <span class="badge-salida">Salida anticipada</span>
