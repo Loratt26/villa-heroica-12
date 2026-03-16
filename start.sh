@@ -1,9 +1,14 @@
 #!/bin/bash
 
 echo "================================================"
-echo "  Colegio Villa Heroica — Sistema Asistencia"
+echo "  Colegio Villa Heroica - Sistema Asistencia"
 echo "================================================"
-echo "DB path: $(python -c 'import django, os; os.environ[\"DJANGO_SETTINGS_MODULE\"]=\"asistencia.settings\"; django.setup(); from django.conf import settings; print(settings.DATABASES[\"default\"][\"NAME\"])' 2>/dev/null || echo 'calculando...')"
+
+if [ -n "${DATABASE_URL:-}" ]; then
+    echo "Using PostgreSQL production database"
+else
+    echo "Using SQLite development database"
+fi
 
 echo ""
 echo "==> [1/5] Creando directorios..."
@@ -13,15 +18,21 @@ echo "==> [2/5] Aplicando migraciones..."
 python manage.py migrate --noinput
 MIGRATE_EXIT=$?
 if [ $MIGRATE_EXIT -ne 0 ]; then
-    echo "CRITICO: migrate falló con código $MIGRATE_EXIT"
+    echo "CRITICO: migrate fallo con codigo $MIGRATE_EXIT"
     exit 1
 fi
 echo "Migraciones aplicadas correctamente."
 
 echo "==> [3/5] Cargando datos iniciales..."
-python manage.py loaddata control/fixtures/empleados.json 2>/dev/null \
-  && echo "Fixtures cargados." \
-  || echo "Fixtures ya existentes o advertencia ignorada."
+python manage.py shell -c "
+from django.core.management import call_command
+from control.models import Empleado
+if Empleado.objects.exists():
+    print('Empleados existentes detectados. No se cargan fixtures.')
+else:
+    call_command('loaddata', 'control/fixtures/empleados.json')
+    print('Fixtures cargados.')
+"
 
 echo "==> [4/5] Creando usuario admin..."
 python manage.py shell -c "

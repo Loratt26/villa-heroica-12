@@ -360,6 +360,27 @@
     margin-top: 1rem;
   }
 
+  .justificante-trigger {
+    display: none;
+    margin-top: 1rem;
+  }
+
+  .justificante-trigger.show {
+    display: block;
+  }
+
+  .btn-justificante {
+    width: 100%;
+    min-height: 64px;
+    border-radius: 20px;
+    border: 2px dashed rgba(16, 35, 63, 0.28);
+    background: #fff;
+    color: var(--vh-navy);
+    font-family: 'Archivo', sans-serif;
+    font-size: 1rem;
+    text-align: center;
+  }
+
   .extra-block { display: none; }
   .extra-block.show { display: block; }
 
@@ -560,6 +581,12 @@
           </button>
         </div>
 
+        <div class="justificante-trigger" id="justificante-trigger-block">
+          <button type="button" class="btn-justificante" id="btn-justificante">
+            <i class="bi bi-journal-text me-2"></i>Añadir justificante
+          </button>
+        </div>
+
         <div class="extra-fields">
           <div class="extra-block" id="motivo-block">
             <label class="form-label fw-bold mb-2">Motivo</label>
@@ -604,6 +631,8 @@ const preview = document.getElementById('cedula-preview');
 const spinnerLine = document.getElementById('spinner-line');
 const employeeCard = document.getElementById('employee-card');
 const feedbackBox = document.getElementById('feedback-box');
+const justificanteTriggerBlock = document.getElementById('justificante-trigger-block');
+const justificanteButton = document.getElementById('btn-justificante');
 const motivoBlock = document.getElementById('motivo-block');
 const autorizadorBlock = document.getElementById('autorizador-block');
 const motivoInput = document.getElementById('inp-motivo');
@@ -621,6 +650,7 @@ let selectedAction = INITIAL_ACTION === 'salida' ? 'salida' : 'entrada';
 let abortController = null;
 let debounceHandle = null;
 let idleTimer = null;
+let justificationExpanded = false;
 
 function hasStartedInput() {
   return Boolean(
@@ -632,6 +662,7 @@ function hasStartedInput() {
 
 function setAction(action) {
   selectedAction = action === 'salida' ? 'salida' : 'entrada';
+  justificationExpanded = false;
   actionButtons.forEach((button) => {
     button.classList.toggle('selected', button.dataset.action === selectedAction);
     button.setAttribute('aria-pressed', String(button.dataset.action === selectedAction));
@@ -655,9 +686,11 @@ function currentCedula() {
 
 function clearEmployee() {
   empleadoData = null;
+  justificationExpanded = false;
   employeeCard.classList.remove('visible');
   feedbackBox.className = 'alert-box';
   feedbackBox.textContent = '';
+  justificanteTriggerBlock.classList.remove('show');
   motivoBlock.classList.remove('show');
   autorizadorBlock.classList.remove('show');
   motivoInput.value = '';
@@ -679,7 +712,17 @@ function updatePreview() {
 }
 
 function updateContinueState() {
-  continueButton.disabled = !(empleadoData && empleadoData.id);
+  if (!(empleadoData && empleadoData.id)) {
+    continueButton.disabled = true;
+    return;
+  }
+
+  const evaluation = evaluationForAction() || {};
+  const requiresJustification = selectedAction === 'salida' && Boolean(
+    evaluation.requires_justification || evaluation.requiere_justificante
+  );
+  const permitted = evaluation.permitida !== false;
+  continueButton.disabled = !permitted || (requiresJustification && !justificationExpanded);
 }
 
 function fillEmployee(data) {
@@ -711,8 +754,10 @@ function evaluationForAction() {
 }
 
 function updateEvaluationUI() {
+  const previousAutorizador = autorizadorSelect.value;
   motivoBlock.classList.remove('show');
   autorizadorBlock.classList.remove('show');
+  justificanteTriggerBlock.classList.remove('show');
   if (!empleadoData) {
     feedbackBox.className = 'alert-box';
     feedbackBox.textContent = '';
@@ -723,13 +768,17 @@ function updateEvaluationUI() {
   if (!evaluation) return;
 
   if (evaluation.estado !== 'normal' && evaluation.mensaje) {
-    showFeedback(`Atencion: ${evaluation.mensaje}`, selectedAction === 'entrada' ? 'alert-warning-strong' : 'alert-danger-strong');
+    showFeedback(evaluation.mensaje, selectedAction === 'entrada' ? 'alert-warning-strong' : 'alert-danger-strong');
   } else {
     showFeedback('Empleado validado. Seleccione Continuar para completar el registro.', 'alert-warning-strong');
   }
 
-  if (evaluation.requiere_motivo) {
-    motivoBlock.classList.add('show');
+  const requiresJustification = selectedAction === 'salida' && Boolean(
+    evaluation.requires_justification || evaluation.requiere_justificante
+  );
+
+  if (requiresJustification) {
+    justificanteTriggerBlock.classList.add('show');
   }
 
   if (evaluation.requiere_autorizacion && evaluation.autorizadores) {
@@ -740,8 +789,25 @@ function updateEvaluationUI() {
       option.textContent = `${autorizador.nombre} ${autorizador.apellido}`;
       autorizadorSelect.appendChild(option);
     });
+    if (previousAutorizador) {
+      autorizadorSelect.value = previousAutorizador;
+    }
+  }
+
+  if (requiresJustification && !justificationExpanded) {
+    updateContinueState();
+    return;
+  }
+
+  if (evaluation.requiere_motivo) {
+    motivoBlock.classList.add('show');
+  }
+
+  if (evaluation.requiere_autorizacion && evaluation.autorizadores) {
     autorizadorBlock.classList.add('show');
   }
+
+  updateContinueState();
 }
 
 async function lookupCedula() {
@@ -797,6 +863,14 @@ digitsInput.addEventListener('input', () => {
 
 actionButtons.forEach((button) => {
   button.addEventListener('click', () => setAction(button.dataset.action));
+});
+
+justificanteButton.addEventListener('click', () => {
+  justificationExpanded = true;
+  updateEvaluationUI();
+  if (motivoBlock.classList.contains('show')) {
+    motivoInput.focus();
+  }
 });
 
 form.addEventListener('submit', (event) => {

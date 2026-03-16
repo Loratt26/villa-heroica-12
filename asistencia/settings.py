@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -61,15 +62,18 @@ _en_nube = bool(
 )
 
 if _DATABASE_URL:
+    print('Using PostgreSQL production database')
     DATABASES = {
         'default': dj_database_url.parse(
             _DATABASE_URL,
             conn_max_age=600,
-            ssl_require=False,
+            ssl_require=True,
         )
     }
     DATABASES['default']['CONN_HEALTH_CHECKS'] = True
 else:
+    if _en_nube:
+        raise ImproperlyConfigured('DATABASE_URL es obligatorio en produccion para usar PostgreSQL.')
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',

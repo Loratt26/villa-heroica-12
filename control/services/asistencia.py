@@ -86,6 +86,8 @@ def _evaluacion_salida_base() -> dict:
         'minutos': 0,
         'permitida': True,
         'codigo': '',
+        'requiere_justificante': False,
+        'requires_justification': False,
         'requiere_motivo': False,
         'requires_motivo': False,
         'requiere_autorizacion': False,
@@ -104,6 +106,10 @@ def serializar_evaluacion(evaluacion: dict) -> dict:
         data['authorized_list'] = []
     data['autorizadores'] = data.get('autorizadores') or data['authorized_list']
     data['requires_motivo'] = data.get('requires_motivo', data.get('requiere_motivo', False))
+    data['requires_justification'] = data.get(
+        'requires_justification',
+        data.get('requiere_justificante', False),
+    )
     data['requires_authorization'] = data.get(
         'requires_authorization',
         data.get('requiere_autorizacion', False),
@@ -150,7 +156,7 @@ def evaluar_salida(
                 'estado': 'salida_bloqueada',
                 'permitida': False,
                 'codigo': 'JORNADA_MINIMA_NO_CUMPLIDA',
-                'mensaje': 'Debe cumplir al menos 4 horas de jornada antes de marcar salida.',
+                'mensaje': 'Atención: Debe cumplir al menos 4 horas de jornada antes de marcar salida',
             })
             return evaluacion
 
@@ -158,10 +164,12 @@ def evaluar_salida(
         return evaluacion
 
     faltan = _minutos_entre(hora, empleado.hora_salida)
-    if faltan > SALIDA_ANT_MIN:
+    if faltan >= SALIDA_ANT_MIN:
         authorized_list = _autorizadores_queryset()
         evaluacion.update({
             'estado': 'salida_anticipada',
+            'requiere_justificante': True,
+            'requires_justification': True,
             'requiere_motivo': True,
             'requires_motivo': True,
             'requiere_autorizacion': True,
