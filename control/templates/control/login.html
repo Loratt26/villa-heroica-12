@@ -61,19 +61,22 @@
             font-size: 0.78rem;
             font-weight: 800;
             letter-spacing: 0.05em;
-            text-transform: uppercase;
             margin-bottom: 1.25rem;
         }
 
         .brand-logo {
-            width: 120px;
-            height: 120px;
+            display: block;
+            width: min(120px, 100%);
+            max-width: 120px;
+            height: auto;
+            aspect-ratio: 1 / 1;
             object-fit: contain;
             border-radius: 50%;
             background: #fff;
             padding: 0.4rem;
             box-shadow: 0 14px 36px rgba(16, 35, 63, 0.12);
             margin-bottom: 1rem;
+            image-rendering: -webkit-optimize-contrast;
         }
 
         .brand-title {
@@ -176,9 +179,34 @@
             background: rgba(16, 35, 63, 0.04);
         }
 
+        .is-loading {
+            pointer-events: none;
+            opacity: 0.85;
+        }
+
         @media (max-width: 900px) {
             .login-shell {
                 grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .login-shell {
+                padding: 0.85rem;
+            }
+
+            .brand-panel,
+            .login-card {
+                border-radius: 24px;
+                padding: 1.25rem;
+            }
+
+            .system-chip,
+            .link-secondary,
+            .btn-login {
+                width: 100%;
+                justify-content: center;
+                text-align: center;
             }
         }
     </style>
@@ -230,20 +258,21 @@
                         <input type="password" name="password" class="form-control" placeholder="Ingrese su contraseña" required>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-login">
+                <button type="submit" class="btn btn-login" data-loading-text="Ingresando...">
                     <i class="bi bi-box-arrow-in-right me-2"></i>Entrar al panel
                 </button>
             </form>
 
             <div class="login-links">
-                <a href="{% url 'kiosco' %}" class="link-secondary">
+                <a href="{% url 'kiosco' %}" class="link-secondary" data-loading-link data-loading-text="Abriendo panel...">
                     <i class="bi bi-display"></i>Ir a Control de Asistencia
                 </a>
-                <a href="{% url 'dashboard' %}" class="link-secondary">
+                <a href="{% url 'dashboard' %}" class="link-secondary" data-loading-link data-loading-text="Volviendo al inicio...">
                     <i class="bi bi-house-door"></i>Volver al inicio
                 </a>
             </div>
         </section>
     </div>
+    <script src="{% static 'control/js/loading.js' %}"></script>
 </body>
 </html>

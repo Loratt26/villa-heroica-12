@@ -14,9 +14,7 @@
         :root {
             --vh-navy: #10233f;
             --vh-gold: #cc9b2f;
-            --vh-sand: #f7efe0;
             --vh-paper: #fffdf8;
-            --vh-line: #d8ceb9;
         }
 
         body {
@@ -29,6 +27,11 @@
                 linear-gradient(180deg, #f9f3e8 0%, #efe5d4 100%);
         }
 
+        .is-loading {
+            pointer-events: none;
+            opacity: 0.85;
+        }
+
         .hero-wrap {
             max-width: 1120px;
             margin: 0 auto;
@@ -36,6 +39,7 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            justify-content: center;
         }
 
         .hero-top {
@@ -44,6 +48,7 @@
             align-items: center;
             gap: 1rem;
             padding: 0.4rem 0 1rem;
+            flex-wrap: wrap;
         }
 
         .system-chip {
@@ -57,12 +62,10 @@
             font-size: 0.78rem;
             font-weight: 800;
             letter-spacing: 0.04em;
-            text-transform: uppercase;
             box-shadow: 0 14px 30px rgba(16, 35, 63, 0.08);
         }
 
         .hero-card {
-            margin: auto 0;
             background: rgba(255, 253, 248, 0.92);
             border: 1px solid rgba(16, 35, 63, 0.08);
             border-radius: 36px;
@@ -77,26 +80,30 @@
             align-items: center;
         }
 
-        .hero-brand {
+        .hero-brand,
+        .hero-panel {
             padding: 1.25rem;
         }
 
         .hero-logo {
-            width: 122px;
-            height: 122px;
+            display: block;
+            width: min(122px, 100%);
+            max-width: 122px;
+            height: auto;
+            aspect-ratio: 1 / 1;
             object-fit: contain;
             background: #fff;
             border-radius: 50%;
             padding: 0.4rem;
             box-shadow: 0 18px 40px rgba(16, 35, 63, 0.12);
             margin-bottom: 1rem;
+            image-rendering: -webkit-optimize-contrast;
         }
 
         .hero-kicker {
             font-size: 0.84rem;
             font-weight: 800;
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
+            letter-spacing: 0.08em;
             color: #7b6641;
             margin-bottom: 0.75rem;
         }
@@ -119,7 +126,6 @@
         .hero-panel {
             background: linear-gradient(180deg, #10233f 0%, #18345b 100%);
             border-radius: 30px;
-            padding: 1.5rem;
             color: #fff;
             min-height: 100%;
             display: flex;
@@ -140,63 +146,73 @@
         }
 
         .hero-cta {
-            display: flex;
-            flex-direction: column;
+            display: grid;
             gap: 0.85rem;
         }
 
-        .btn-main {
-            min-height: 96px;
-            border-radius: 24px;
-            border: none;
-            background: #fff;
-            color: var(--vh-navy);
-            font-family: 'Archivo', sans-serif;
-            font-size: clamp(1.25rem, 2vw, 1.6rem);
-            letter-spacing: 0.04em;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.85rem;
-            text-decoration: none;
-            box-shadow: 0 16px 34px rgba(0, 0, 0, 0.18);
-        }
-
-        .btn-main:hover {
-            color: var(--vh-navy);
-            transform: translateY(-1px);
-        }
-
+        .btn-main,
         .btn-secondary {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 0.55rem;
+            gap: 0.85rem;
+            text-decoration: none;
+            border-radius: 24px;
+            min-height: 84px;
+            font-weight: 800;
+            text-align: center;
+            white-space: normal;
+        }
+
+        .btn-main {
+            border: none;
+            background: #fff;
+            color: var(--vh-navy);
+            font-family: 'Archivo', sans-serif;
+            font-size: clamp(1.2rem, 2vw, 1.6rem);
+            letter-spacing: 0.02em;
+            box-shadow: 0 16px 34px rgba(0, 0, 0, 0.18);
+        }
+
+        .btn-secondary {
             min-height: 60px;
             border-radius: 18px;
             border: 1px solid rgba(255, 255, 255, 0.22);
             background: transparent;
             color: #fff;
-            text-decoration: none;
-            font-weight: 700;
-        }
-
-        .hero-footer {
-            text-align: center;
-            padding-top: 1rem;
-            color: #58657a;
-            font-size: 0.84rem;
-            font-weight: 700;
         }
 
         @media (max-width: 860px) {
             .hero-grid {
                 grid-template-columns: 1fr;
             }
+        }
 
-            .hero-top {
-                flex-direction: column;
-                align-items: flex-start;
+        @media (max-width: 480px) {
+            .hero-wrap {
+                padding: 0.85rem;
+            }
+
+            .hero-card {
+                padding: 1rem;
+                border-radius: 24px;
+            }
+
+            .hero-brand,
+            .hero-panel {
+                padding: 1rem;
+            }
+
+            .system-chip,
+            .hero-top .btn {
+                width: 100%;
+                justify-content: center;
+                text-align: center;
+            }
+
+            .btn-main,
+            .btn-secondary {
+                width: 100%;
             }
         }
     </style>
@@ -208,7 +224,7 @@
                 <i class="bi bi-shield-check"></i>
                 Sistema de Asistencia v1.0 | Diseñado para Colegio Villa Heroica
             </div>
-            <a href="{% url 'login' %}" class="btn btn-outline-dark rounded-pill px-4 py-2 fw-bold">
+            <a href="{% url 'login' %}" class="btn btn-outline-dark rounded-pill px-4 py-2 fw-bold" data-loading-link data-loading-text="Abriendo acceso...">
                 <i class="bi bi-person-lock me-2"></i>Acceso administrativo
             </a>
         </div>
@@ -220,20 +236,19 @@
                     <div class="hero-kicker">Colegio Villa Heroica</div>
                     <h1 class="hero-title">Control de<br>Asistencia</h1>
                     <p class="hero-copy">
-                        Flujo rapido para entrada y salida diaria, pensado para uso escolar real:
-                        claro bajo sol, facil desde movil y listo para jornadas con alto volumen de personas.
+                        Plataforma institucional para el registro y control de asistencia del personal del Colegio Villa Heroica.
                     </p>
                 </div>
 
                 <div class="hero-panel">
-                    <h2>Registro inmediato</h2>
-                    <p>Presione el acceso principal para comenzar el flujo publico sin iniciar sesion.</p>
+                    <h2>Registro institucional</h2>
+                    <p>Utilice el acceso principal para iniciar el registro sin autenticacion.</p>
                     <div class="hero-cta">
-                        <a href="{% url 'kiosco' %}" class="btn-main">
+                        <a href="{% url 'kiosco' %}" class="btn-main" data-loading-link data-loading-text="Abriendo registro...">
                             <i class="bi bi-person-badge"></i>
-                            REGISTRAR ASISTENCIA
+                            Registrar asistencia
                         </a>
-                        <a href="{% url 'login' %}" class="btn-secondary">
+                        <a href="{% url 'login' %}" class="btn-secondary" data-loading-link data-loading-text="Abriendo acceso...">
                             <i class="bi bi-box-arrow-in-right"></i>
                             Iniciar sesion
                         </a>
@@ -241,10 +256,7 @@
                 </div>
             </div>
         </div>
-
-        <div class="hero-footer">
-            Sistema de Asistencia v1.0 | Diseñado para Colegio Villa Heroica
-        </div>
     </div>
+    <script src="{% static 'control/js/loading.js' %}"></script>
 </body>
 </html>

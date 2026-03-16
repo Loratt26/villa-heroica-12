@@ -74,22 +74,22 @@
             <div class="d-flex align-items-center justify-content-between mb-3">
                 <div>
                     <h6 class="fw-bold mb-1" style="color:#10233f;">Centro de acciones</h6>
-                    <p class="mb-0 text-muted" style="font-size:.88rem;">Atajos de uso frecuente para la jornada.</p>
+                    <p class="mb-0 text-muted" style="font-size:.88rem;">Accesos principales del sistema.</p>
                 </div>
-                <img src="{% static 'control/img/logo-villa-heroica.png' %}" alt="Colegio Villa Heroica" style="width:64px;height:64px;object-fit:contain;">
+                <img src="{% static 'control/img/logo-villa-heroica.png' %}" alt="Colegio Villa Heroica" style="display:block;width:min(64px,100%);max-width:64px;height:auto;aspect-ratio:1/1;object-fit:contain;image-rendering:-webkit-optimize-contrast;">
             </div>
 
             <div class="d-grid gap-3">
-                <a href="{% url 'kiosco' %}" target="_blank" rel="noopener noreferrer" class="btn btn-primary-strong py-3" style="min-height:86px;">
+                <a href="{% url 'kiosco' %}" target="_blank" rel="noopener noreferrer" class="btn btn-primary-strong py-3" style="min-height:86px;" data-loading-link data-loading-text="Abriendo panel...">
                     <i class="bi bi-display me-2"></i>Abrir Control de Asistencia
                 </a>
-                <a href="{% url 'exportar_csv' %}?fecha_inicio={{ hoy|date:'Y-m-d' }}&fecha_fin={{ hoy|date:'Y-m-d' }}" class="btn btn-outline-strong py-3" style="min-height:74px;">
-                    <i class="bi bi-file-earmark-arrow-down me-2"></i>EXPORTAR HOY
+                <a href="{% url 'exportar_csv' %}?fecha_inicio={{ hoy|date:'Y-m-d' }}&fecha_fin={{ hoy|date:'Y-m-d' }}" class="btn btn-outline-strong py-3" style="min-height:74px;" data-loading-link data-loading-text="Exportando...">
+                    <i class="bi bi-file-earmark-arrow-down me-2"></i>Exportar hoy
                 </a>
-                <a href="{% url 'crear_empleado' %}" class="btn btn-outline-strong py-3" style="min-height:74px;">
-                    <i class="bi bi-person-plus me-2"></i>NUEVO EMPLEADO RAPIDO
+                <a href="{% url 'crear_empleado' %}" class="btn btn-outline-strong py-3" style="min-height:74px;" data-loading-link data-loading-text="Abriendo formulario...">
+                    <i class="bi bi-person-plus me-2"></i>Crear nuevo empleado
                 </a>
-                <a href="{% url 'marcaje' %}" class="btn btn-outline-strong py-3" style="min-height:74px;">
+                <a href="{% url 'marcaje' %}" class="btn btn-outline-strong py-3" style="min-height:74px;" data-loading-link data-loading-text="Abriendo registro...">
                     <i class="bi bi-fingerprint me-2"></i>Registro manual
                 </a>
             </div>
@@ -110,12 +110,12 @@
 
     <div class="col-xl-8">
         <div class="tabla-asistencia">
-            <div class="d-flex justify-content-between align-items-center px-4 py-3" style="border-bottom:1px solid rgba(16,35,63,.08);">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 px-4 py-3" style="border-bottom:1px solid rgba(16,35,63,.08);">
                 <div>
                     <div class="fw-bold" style="color:#10233f;">Ultimos registros de hoy</div>
-                    <div class="text-muted" style="font-size:.84rem;">Seguimiento rapido de entradas y salidas.</div>
+                    <div class="text-muted" style="font-size:.84rem;">Registros del dia.</div>
                 </div>
-                <a href="{% url 'admin_lista_registros' %}" class="btn btn-outline-strong btn-sm">
+                <a href="{% url 'admin_lista_registros' %}" class="btn btn-outline-strong btn-sm" data-loading-link data-loading-text="Abriendo historial...">
                     <i class="bi bi-clock-history me-1"></i>Historial de Asistencia
                 </a>
             </div>

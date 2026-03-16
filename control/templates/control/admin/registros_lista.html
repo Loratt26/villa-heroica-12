@@ -1,24 +1,64 @@
 {% extends 'control/base.html' %}
 {% block title %}Historial de Asistencia - {{ fecha|date:"d/m/Y" }}{% endblock %}
 {% block content %}
+<style>
+    .registros-filtro {
+        display: flex;
+        align-items: end;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .registro-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .registro-actions .btn {
+        min-height: 42px;
+        white-space: nowrap;
+    }
+
+    .delete-modal textarea {
+        min-height: 120px;
+        resize: vertical;
+    }
+
+    @media (max-width: 575px) {
+        .registros-filtro > * {
+            width: 100%;
+        }
+
+        .registro-actions {
+            width: 100%;
+        }
+
+        .registro-actions .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+
 <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-3">
     <div>
         <h1><i class="bi bi-clock-history me-2" style="color:#2c4a6e;"></i>Historial de Asistencia</h1>
-        <p>Gestion diaria de registros de asistencia para revision administrativa.</p>
+        <p>Consulta y administracion diaria de los registros de asistencia.</p>
     </div>
-    <a href="{% url 'admin_audit_log' %}" class="btn btn-outline-strong btn-sm">
+    <a href="{% url 'admin_audit_log' %}" class="btn btn-outline-strong btn-sm" data-loading-link data-loading-text="Abriendo auditoria...">
         <i class="bi bi-journal-text me-1"></i>Ver auditoria
     </a>
 </div>
 
 <div class="card-form mb-3">
-    <form method="get" class="d-flex gap-2 align-items-end flex-wrap">
+    <form method="get" class="registros-filtro">
         <div>
             <label class="form-label fw-semibold" style="font-size:.82rem;">Fecha</label>
             <input type="date" name="fecha" class="form-control form-control-sm" value="{{ fecha|date:'Y-m-d' }}">
         </div>
-        <button type="submit" class="btn btn-primary-strong btn-sm">
-            <i class="bi bi-search"></i> Ver
+        <button type="submit" class="btn btn-primary-strong btn-sm" data-loading-text="Consultando...">
+            <i class="bi bi-search"></i>Ver registros
         </button>
     </form>
 </div>
@@ -57,13 +97,13 @@
                     </span>
                 </td>
                 <td>
-                    <div class="d-flex gap-1">
-                        <a href="{% url 'admin_editar_registro' r.pk %}" class="btn btn-sm btn-outline-primary" title="Editar">
-                            <i class="bi bi-pencil"></i>
+                    <div class="registro-actions">
+                        <a href="{% url 'admin_editar_registro' r.pk %}" class="btn btn-sm btn-outline-strong" data-loading-link data-loading-text="Abriendo edicion...">
+                            <i class="bi bi-pencil"></i>Editar
                         </a>
-                        <a href="{% url 'admin_eliminar_registro' r.pk %}" class="btn btn-sm btn-outline-danger" title="Eliminar">
-                            <i class="bi bi-trash"></i>
-                        </a>
+                        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteRegistro{{ r.pk }}" data-no-loading="true">
+                            <i class="bi bi-trash"></i>Eliminar
+                        </button>
                     </div>
                 </td>
             </tr>
@@ -75,5 +115,40 @@
         </tbody>
     </table>
 </div>
+
 <div class="mt-2 text-muted" style="font-size:.82rem;">{{ registros.count }} registro(s)</div>
+
+{% for r in registros %}
+<div class="modal fade delete-modal" id="deleteRegistro{{ r.pk }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0" style="border-radius:24px;">
+            <div class="modal-body p-4">
+                <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
+                    <div>
+                        <h5 class="fw-bold mb-1" style="color:#10233f;">Eliminar registro</h5>
+                        <div class="text-muted" style="font-size:.9rem;">{{ r.empleado }} - {{ r.fecha|date:"d/m/Y" }}</div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar" data-no-loading="true"></button>
+                </div>
+                <div class="p-3 rounded-4 mb-3" style="background:#fff7ed;border:1px solid rgba(234,88,12,.16);font-size:.9rem;color:#7c2d12;">
+                    Esta accion elimina definitivamente el registro seleccionado.
+                </div>
+                <form method="post" action="{% url 'admin_eliminar_registro' r.pk %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Motivo de eliminacion</label>
+                        <textarea name="motivo" class="form-control" placeholder="Ingrese el motivo de eliminacion." required></textarea>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap justify-content-end">
+                        <button type="button" class="btn btn-outline-strong" data-bs-dismiss="modal" data-no-loading="true">Cancelar</button>
+                        <button type="submit" class="btn btn-danger" data-loading-text="Eliminando...">
+                            <i class="bi bi-trash me-1"></i>Eliminar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
 {% endblock %}

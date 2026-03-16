@@ -43,18 +43,21 @@
     font-size: 0.78rem;
     font-weight: 800;
     letter-spacing: 0.04em;
-    text-transform: uppercase;
     margin-bottom: 1.2rem;
   }
 
   .logo {
-    width: 92px;
-    height: 92px;
+    display: block;
+    width: min(92px, 100%);
+    max-width: 92px;
+    height: auto;
+    aspect-ratio: 1 / 1;
     object-fit: contain;
     background: #fff;
     border-radius: 50%;
     padding: 0.35rem;
     margin-bottom: 1rem;
+    image-rendering: -webkit-optimize-contrast;
   }
 
   .icono {
@@ -104,6 +107,18 @@
     color: #10233f;
     border: 2px solid rgba(16, 35, 63, 0.12);
   }
+
+  .is-loading {
+    pointer-events: none;
+    opacity: 0.85;
+  }
+
+  @media (max-width: 420px) {
+    .card-e {
+      padding: 1.35rem;
+      border-radius: 24px;
+    }
+  }
 </style>
 </head>
 <body>
@@ -116,12 +131,13 @@
   <h2>No se pudo registrar</h2>
   <p>{{ mensaje }}</p>
   <div class="action-row">
-    <a href="{% url 'kiosco' %}" class="btn-main">CONTINUAR</a>
-    <a href="{% url 'dashboard' %}" class="btn-back">VOLVER</a>
+    <a href="{% url 'kiosco' %}" class="btn-main" data-loading-link data-loading-text="Abriendo panel...">Continuar</a>
+    <a href="{% url 'dashboard' %}" class="btn-back" data-loading-link data-loading-text="Volviendo...">Volver</a>
   </div>
 </div>
 <script>
   setTimeout(() => window.location.href = '{% url "kiosco" %}', 8000);
 </script>
+<script src="{% static 'control/js/loading.js' %}"></script>
 </body>
 </html>
