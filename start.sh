@@ -1,10 +1,28 @@
 #!/bin/bash
 
+set -e
+
+has_postgres_env() {
+    if [ -n "${DATABASE_URL:-}" ] || [ -n "${DATABASE_PRIVATE_URL:-}" ] || [ -n "${DATABASE_PUBLIC_URL:-}" ] || [ -n "${POSTGRES_URL:-}" ] || [ -n "${POSTGRES_PRIVATE_URL:-}" ] || [ -n "${POSTGRES_PUBLIC_URL:-}" ]; then
+        return 0
+    fi
+
+    if [ -n "${PGHOST:-}" ] && [ -n "${PGPORT:-}" ] && [ -n "${PGUSER:-}" ] && [ -n "${PGPASSWORD:-}" ] && [ -n "${PGDATABASE:-}" ]; then
+        return 0
+    fi
+
+    if [ -n "${POSTGRES_HOST:-}" ] && [ -n "${POSTGRES_PORT:-}" ] && [ -n "${POSTGRES_USER:-}" ] && [ -n "${POSTGRES_PASSWORD:-}" ] && { [ -n "${POSTGRES_DB:-}" ] || [ -n "${POSTGRES_DATABASE:-}" ]; }; then
+        return 0
+    fi
+
+    return 1
+}
+
 echo "================================================"
 echo "  Colegio Villa Heroica - Sistema Asistencia"
 echo "================================================"
 
-if [ -n "${DATABASE_URL:-}" ]; then
+if has_postgres_env; then
     echo "Using PostgreSQL production database"
 else
     echo "Using SQLite development database"
@@ -15,10 +33,8 @@ echo "==> [1/5] Creando directorios..."
 mkdir -p /tmp/logs media staticfiles
 
 echo "==> [2/5] Aplicando migraciones..."
-python manage.py migrate --noinput
-MIGRATE_EXIT=$?
-if [ $MIGRATE_EXIT -ne 0 ]; then
-    echo "CRITICO: migrate fallo con codigo $MIGRATE_EXIT"
+if ! python manage.py migrate --noinput; then
+    echo "CRITICO: migrate fallo"
     exit 1
 fi
 echo "Migraciones aplicadas correctamente."

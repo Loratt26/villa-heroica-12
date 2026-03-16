@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from urllib.parse import quote_plus
 
 import dj_database_url
 from django.core.exceptions import ImproperlyConfigured
@@ -52,14 +53,48 @@ TEMPLATES = [
 WSGI_APPLICATION = 'asistencia.wsgi.application'
 
 # Base de datos
-# 1. DATABASE_URL en produccion
+# 1. PostgreSQL en produccion via DATABASE_URL / Railway vars
 # 2. SQLite local para desarrollo
-_DATABASE_URL = os.environ.get('DATABASE_URL', '').strip()
 _en_nube = bool(
     os.environ.get('RAILWAY_ENVIRONMENT')
     or os.environ.get('VERCEL')
     or os.environ.get('RAILWAY_PROJECT_ID')
 )
+
+
+def _database_url_from_parts():
+    host = os.environ.get('PGHOST') or os.environ.get('POSTGRES_HOST')
+    port = os.environ.get('PGPORT') or os.environ.get('POSTGRES_PORT') or '5432'
+    user = os.environ.get('PGUSER') or os.environ.get('POSTGRES_USER')
+    password = os.environ.get('PGPASSWORD') or os.environ.get('POSTGRES_PASSWORD')
+    name = os.environ.get('PGDATABASE') or os.environ.get('POSTGRES_DB') or os.environ.get('POSTGRES_DATABASE')
+
+    if not all([host, port, user, password, name]):
+        return ''
+
+    return (
+        f'postgresql://{quote_plus(user)}:{quote_plus(password)}@'
+        f'{host}:{port}/{name}'
+    )
+
+
+def _resolve_database_url():
+    candidates = [
+        os.environ.get('DATABASE_URL', '').strip(),
+        os.environ.get('DATABASE_PRIVATE_URL', '').strip(),
+        os.environ.get('DATABASE_PUBLIC_URL', '').strip(),
+        os.environ.get('POSTGRES_URL', '').strip(),
+        os.environ.get('POSTGRES_PRIVATE_URL', '').strip(),
+        os.environ.get('POSTGRES_PUBLIC_URL', '').strip(),
+        _database_url_from_parts(),
+    ]
+    for candidate in candidates:
+        if candidate:
+            return candidate
+    return ''
+
+
+_DATABASE_URL = _resolve_database_url()
 
 if _DATABASE_URL:
     print('Using PostgreSQL production database')
@@ -72,7 +107,7 @@ if _DATABASE_URL:
     }
     DATABASES['default']['CONN_HEALTH_CHECKS'] = True
 else:
-    if _en_nube:
+    if _en_nube and 'collectstatic' not in os.sys.argv:
         raise ImproperlyConfigured('DATABASE_URL es obligatorio en produccion para usar PostgreSQL.')
     DATABASES = {
         'default': {
@@ -125,7 +160,7 @@ CACHES = {
 
 # Logging
 _LOGS_DIR = Path('/tmp/logs') if _en_nube else BASE_DIR / 'logs'
-_LOGS_DIR.mkdir(exist_ok=True)
+_LOGS_DIR.mkdir(parents=True, exist_ok=True)
 
 LOGGING = {
     'version': 1,
