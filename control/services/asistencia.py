@@ -19,7 +19,6 @@ logger = logging.getLogger('control.asistencia')
 
 TARDANZA_MIN = getattr(settings, 'KIOSCO_TOLERANCIA_TARDANZA_MIN', 20)
 SALIDA_ANT_MIN = 20
-MIN_JORNADA_SALIDA_H = 4
 MAX_JORNADA_H = 16
 DEPARTAMENTOS_AUTORIZADORES = ['Direcci\u00f3n', 'Coordinaci\u00f3n']
 
@@ -81,10 +80,9 @@ def _serializar_autorizadores(queryset):
 
 def _evaluacion_salida_base() -> dict:
     return {
-        'estado': 'normal',
+        'estado': 'normal_exit',
         'mensaje': '',
         'minutos': 0,
-        'permitida': True,
         'codigo': '',
         'requiere_justificante': False,
         'requires_justification': False,
@@ -149,17 +147,6 @@ def evaluar_salida(
 ) -> dict:
     evaluacion = _evaluacion_salida_base()
 
-    if registro and registro.hora_entrada:
-        minutos_trabajados = _minutos_entre(registro.hora_entrada, hora)
-        if minutos_trabajados < MIN_JORNADA_SALIDA_H * 60:
-            evaluacion.update({
-                'estado': 'salida_bloqueada',
-                'permitida': False,
-                'codigo': 'JORNADA_MINIMA_NO_CUMPLIDA',
-                'mensaje': 'Atención: Debe cumplir al menos 4 horas de jornada antes de marcar salida',
-            })
-            return evaluacion
-
     if not empleado.hora_salida:
         return evaluacion
 
@@ -167,7 +154,7 @@ def evaluar_salida(
     if faltan >= SALIDA_ANT_MIN:
         authorized_list = _autorizadores_queryset()
         evaluacion.update({
-            'estado': 'salida_anticipada',
+            'estado': 'requires_justification',
             'requiere_justificante': True,
             'requires_justification': True,
             'requiere_motivo': True,
@@ -326,9 +313,6 @@ def registrar_salida(
             return {'ok': False, 'codigo': error_hora, 'registro': None}
 
         evaluacion = evaluar_salida(empleado, hora, registro=registro)
-        if not evaluacion.get('permitida', True):
-            return {'ok': False, 'codigo': evaluacion['codigo'], 'registro': registro}
-
         if evaluacion['requiere_motivo'] and not motivo.strip():
             return {'ok': False, 'codigo': 'MOTIVO_REQUERIDO', 'registro': registro}
 

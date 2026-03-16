@@ -718,11 +718,11 @@ function updateContinueState() {
   }
 
   const evaluation = evaluationForAction() || {};
-  const requiresJustification = selectedAction === 'salida' && Boolean(
-    evaluation.requires_justification || evaluation.requiere_justificante
+  const requiresJustification = selectedAction === 'salida' && (
+    evaluation.estado === 'requires_justification' ||
+    Boolean(evaluation.requires_justification || evaluation.requiere_justificante)
   );
-  const permitted = evaluation.permitida !== false;
-  continueButton.disabled = !permitted || (requiresJustification && !justificationExpanded);
+  continueButton.disabled = requiresJustification && !justificationExpanded;
 }
 
 function fillEmployee(data) {
@@ -767,14 +767,15 @@ function updateEvaluationUI() {
   const evaluation = evaluationForAction();
   if (!evaluation) return;
 
-  if (evaluation.estado !== 'normal' && evaluation.mensaje) {
+  if (!['normal', 'normal_exit'].includes(evaluation.estado) && evaluation.mensaje) {
     showFeedback(evaluation.mensaje, selectedAction === 'entrada' ? 'alert-warning-strong' : 'alert-danger-strong');
   } else {
     showFeedback('Empleado validado. Seleccione Continuar para completar el registro.', 'alert-warning-strong');
   }
 
-  const requiresJustification = selectedAction === 'salida' && Boolean(
-    evaluation.requires_justification || evaluation.requiere_justificante
+  const requiresJustification = selectedAction === 'salida' && (
+    evaluation.estado === 'requires_justification' ||
+    Boolean(evaluation.requires_justification || evaluation.requiere_justificante)
   );
 
   if (requiresJustification) {
@@ -878,8 +879,17 @@ form.addEventListener('submit', (event) => {
   if (!empleadoData) return;
 
   const evaluation = evaluationForAction() || {};
+  const requiresJustification = selectedAction === 'salida' && (
+    evaluation.estado === 'requires_justification' ||
+    Boolean(evaluation.requires_justification || evaluation.requiere_justificante)
+  );
   const motivo = motivoInput.value.trim();
   const autorizador = autorizadorSelect.value;
+
+  if (requiresJustification && !justificationExpanded) {
+    justificanteButton.focus();
+    return;
+  }
 
   if (evaluation.requiere_motivo && !motivo) {
     motivoInput.focus();

@@ -83,7 +83,6 @@ _MENSAJES_ERROR = {
     'AUTORIZACION_INVALIDA':  'El autorizador seleccionado no es válido.',
     'MOTIVO_REQUERIDO':       'Debes escribir el motivo.',
     'HORA_INVALIDA':          'La hora de salida no puede ser anterior o igual a la entrada.',
-    'JORNADA_MINIMA_NO_CUMPLIDA': 'Atención: Debe cumplir al menos 4 horas de jornada antes de marcar salida',
     'DOBLE_SUBMIT':           'Solicitud duplicada. Espera un momento e intenta de nuevo.',
     'ERROR_DB':               'Error temporal del sistema. Por favor intenta de nuevo.',
 }
