@@ -1,9 +1,14 @@
-"""
-Migración hardening v3 — no destructiva.
-Todos los campos nuevos son nullable o tienen default.
-"""
 from django.db import migrations, models
+from django.utils import timezone
+import control.validators
 import django.db.models.deletion
+
+
+def backfill_registro_timestamps(apps, schema_editor):
+    RegistroAsistencia = apps.get_model('control', 'RegistroAsistencia')
+    now = timezone.now()
+    RegistroAsistencia.objects.filter(created_at__isnull=True).update(created_at=now)
+    RegistroAsistencia.objects.filter(updated_at__isnull=True).update(updated_at=now)
 
 
 class Migration(migrations.Migration):
@@ -13,106 +18,161 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # ── Empleado: días laborables ──────────────────────────────────────────
+        migrations.AlterModelTable(
+            name='departamento',
+            table='departamento',
+        ),
+        migrations.AlterModelTable(
+            name='empleado',
+            table='empleado',
+        ),
+        migrations.AlterModelTable(
+            name='registroasistencia',
+            table='registro_asistencia',
+        ),
+        migrations.AlterField(
+            model_name='empleado',
+            name='cedula',
+            field=models.CharField(
+                blank=True,
+                db_index=True,
+                help_text='Formato: V-12345678 o E-12345678',
+                max_length=12,
+                null=True,
+                unique=True,
+                validators=[control.validators.validar_cedula],
+            ),
+        ),
         migrations.AddField(
             model_name='empleado',
             name='dias_laborables',
             field=models.JSONField(
-                default=list,
-                help_text='Lista de días: 0=Lun … 6=Dom. Ej: [0,1,2,3,4]',
                 blank=True,
+                default=list,
+                help_text='0=Lun, 1=Mar, 2=Mie, 3=Jue, 4=Vie, 5=Sab, 6=Dom',
             ),
         ),
-
-        # ── RegistroAsistencia: state machine + turnos nocturnos ───────────────
+        migrations.AddIndex(
+            model_name='empleado',
+            index=models.Index(fields=['activo', 'apellido', 'nombre'], name='emp_activo_ap_nom_idx'),
+        ),
+        migrations.AlterField(
+            model_name='registroasistencia',
+            name='fecha',
+            field=models.DateField(db_index=True),
+        ),
         migrations.AddField(
             model_name='registroasistencia',
             name='estado',
             field=models.CharField(
-                max_length=20,
                 choices=[
-                    ('SIN_ENTRADA',        'Sin entrada'),
+                    ('SIN_ENTRADA', 'Sin entrada'),
                     ('ENTRADA_REGISTRADA', 'Entrada registrada'),
-                    ('SALIDA_REGISTRADA',  'Salida registrada'),
-                    ('CERRADO',            'Cerrado'),
+                    ('SALIDA_REGISTRADA', 'Salida registrada'),
+                    ('CERRADO', 'Cerrado'),
                 ],
-                default='SIN_ENTRADA',
                 db_index=True,
+                default='SIN_ENTRADA',
+                max_length=20,
             ),
         ),
-        # Turnos nocturnos: fecha_salida puede ser distinta de fecha_entrada
         migrations.AddField(
             model_name='registroasistencia',
             name='fecha_salida',
             field=models.DateField(
-                null=True, blank=True,
-                help_text='Solo para turnos que cruzan medianoche.',
+                blank=True,
+                help_text='Solo si el turno cruza medianoche.',
+                null=True,
             ),
         ),
-
-        # ── AuditLog (nueva tabla) ─────────────────────────────────────────────
+        migrations.RunPython(backfill_registro_timestamps, migrations.RunPython.noop),
+        migrations.AlterField(
+            model_name='registroasistencia',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True),
+        ),
+        migrations.AlterField(
+            model_name='registroasistencia',
+            name='updated_at',
+            field=models.DateTimeField(auto_now=True),
+        ),
+        migrations.AddIndex(
+            model_name='registroasistencia',
+            index=models.Index(fields=['fecha'], name='reg_fecha_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='registroasistencia',
+            index=models.Index(fields=['estado', 'fecha'], name='reg_estado_fecha_idx'),
+        ),
         migrations.CreateModel(
             name='AuditLog',
             fields=[
                 ('id', models.BigAutoField(primary_key=True, serialize=False)),
                 ('accion', models.CharField(
-                    max_length=30,
                     choices=[
-                        ('ENTRADA',         'Entrada registrada'),
-                        ('SALIDA',          'Salida registrada'),
-                        ('TARDANZA',        'Tardanza'),
-                        ('SALIDA_ANT',      'Salida anticipada'),
-                        ('EDIT_REGISTRO',   'Registro editado'),
-                        ('DEL_REGISTRO',    'Registro eliminado'),
+                        ('ENTRADA', 'Entrada registrada'),
+                        ('SALIDA', 'Salida registrada'),
+                        ('TARDANZA', 'Tardanza'),
+                        ('SALIDA_ANT', 'Salida anticipada'),
+                        ('EDIT_REGISTRO', 'Registro editado'),
+                        ('DEL_REGISTRO', 'Registro eliminado'),
                         ('EMPLEADO_CREADO', 'Empleado creado'),
-                        ('EMPLEADO_EDITADO','Empleado editado'),
-                        ('EXPORT_CSV',      'Exportación CSV'),
-                        ('LOGIN',           'Login admin'),
+                        ('EMPLEADO_EDITADO', 'Empleado editado'),
+                        ('EXPORT_CSV', 'Exportacion CSV'),
+                        ('LOGIN', 'Login admin'),
                     ],
                     db_index=True,
+                    max_length=30,
                 )),
+                ('timestamp', models.DateTimeField(auto_now_add=True, db_index=True)),
+                ('ip_address', models.GenericIPAddressField(blank=True, null=True)),
+                ('datos_antes', models.JSONField(blank=True, null=True)),
+                ('datos_despues', models.JSONField(blank=True, null=True)),
+                ('metadata', models.JSONField(blank=True, default=dict)),
                 ('empleado', models.ForeignKey(
-                    'control.Empleado', on_delete=django.db.models.deletion.SET_NULL,
-                    null=True, blank=True, related_name='+',
+                    blank=True,
+                    null=True,
+                    on_delete=django.db.models.deletion.SET_NULL,
+                    related_name='+',
+                    to='control.empleado',
                 )),
                 ('realizado_por', models.ForeignKey(
-                    'control.Empleado', on_delete=django.db.models.deletion.SET_NULL,
-                    null=True, blank=True, related_name='+',
+                    blank=True,
+                    null=True,
+                    on_delete=django.db.models.deletion.SET_NULL,
+                    related_name='+',
+                    to='control.empleado',
                 )),
-                ('timestamp',   models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('ip_address',  models.GenericIPAddressField(null=True, blank=True)),
-                ('datos_antes', models.JSONField(null=True, blank=True)),
-                ('datos_despues', models.JSONField(null=True, blank=True)),
-                ('metadata',    models.JSONField(default=dict, blank=True)),
             ],
             options={
                 'db_table': 'audit_log',
                 'ordering': ['-timestamp'],
                 'indexes': [
-                    models.Index(fields=['accion', 'timestamp'],   name='audit_accion_ts_idx'),
+                    models.Index(fields=['accion', 'timestamp'], name='audit_accion_ts_idx'),
                     models.Index(fields=['empleado', 'timestamp'], name='audit_emp_ts_idx'),
                 ],
             },
         ),
-
-        # ── KioscoToken (flujo único kiosco) ───────────────────────────────────
         migrations.CreateModel(
             name='KioscoToken',
             fields=[
-                ('id',         models.BigAutoField(primary_key=True, serialize=False)),
-                ('token',      models.CharField(max_length=64, unique=True, db_index=True)),
-                ('empleado',   models.ForeignKey(
-                    'control.Empleado', on_delete=django.db.models.deletion.CASCADE,
+                ('id', models.BigAutoField(primary_key=True, serialize=False)),
+                ('token', models.CharField(db_index=True, max_length=64, unique=True)),
+                ('accion', models.CharField(max_length=10)),
+                ('creado_at', models.DateTimeField(auto_now_add=True)),
+                ('usado', models.BooleanField(default=False)),
+                ('expira_at', models.DateTimeField()),
+                ('empleado', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE,
                     related_name='+',
+                    to='control.empleado',
                 )),
-                ('accion',     models.CharField(max_length=10)),   # 'entrada'|'salida'
-                ('creado_at',  models.DateTimeField(auto_now_add=True)),
-                ('usado',      models.BooleanField(default=False)),
-                ('expira_at',  models.DateTimeField()),
             ],
             options={
                 'db_table': 'kiosco_token',
-                'indexes': [models.Index(fields=['token', 'usado', 'expira_at'], name='kt_token_usado_exp_idx')],
+                'indexes': [
+                    models.Index(fields=['token', 'usado', 'expira_at'], name='kt_token_usado_exp_idx'),
+                ],
             },
         ),
     ]

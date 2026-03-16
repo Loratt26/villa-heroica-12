@@ -51,8 +51,7 @@ WSGI_APPLICATION = 'asistencia.wsgi.application'
 # ── Base de datos ──────────────────────────────────────────────────────────────
 # Prioridad:
 # 1. DATABASE_URL (PostgreSQL en producción real)
-# 2. /tmp/db.sqlite3 en Railway/Vercel (persiste durante vida del contenedor)
-# 3. db.sqlite3 local en desarrollo
+# 2. db.sqlite3 dentro del proyecto cuando no hay DATABASE_URL
 
 _DATABASE_URL = os.environ.get('DATABASE_URL')
 
@@ -63,7 +62,7 @@ else:
     # En Railway y Vercel usar /tmp — es el único directorio escribible
     # y persiste durante toda la vida del contenedor (no entre deploys)
     _en_nube = os.environ.get('RAILWAY_ENVIRONMENT') or os.environ.get('VERCEL') or os.environ.get('RAILWAY_PROJECT_ID')
-    _DB_PATH = '/tmp/db.sqlite3' if _en_nube else str(BASE_DIR / 'db.sqlite3')
+    _DB_PATH = str(BASE_DIR / 'db.sqlite3')
 
     DATABASES = {
         'default': {
